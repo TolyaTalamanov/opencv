@@ -42,6 +42,25 @@ GAPI_OCV_KERNEL(GOCVRenderNV12, cv::gapi::wip::draw::GRenderNV12)
     static void run(const cv::Mat& y, const cv::Mat& uv, const cv::gapi::wip::draw::Prims& prims,
                     cv::Mat& out_y, cv::Mat& out_uv)
     {
+        /* FIXME How to render correctly on NV12 format ?
+         *
+         * Rendering on NV11 via OpenCV looks like this:
+         *
+         * y --------> 1)NV12toYUV -> yuv -> 2)draw -> yuv -> 3)split -------> out_y
+         *                  ^                                     |
+         *                  |                                     |
+         * uv --------------                                      `----------> out_uv
+         *
+         *
+         * 1) Collect yuv mat from two planes, uv plain in two times less than y plane
+         *    so, upsample uv in tow times, with nearest neighbor interpolation
+         *
+         * 2) Render primitives on YUV
+         *
+         * 3) Convert yuv to NV12 (Here we can lose color, due uv downsampling)
+         *
+         */
+
         cv::Mat yuv;
         NV12ToYUV(y, uv, yuv);
 
