@@ -95,7 +95,7 @@ void poly(cv::Mat mat, std::vector<cv::Point> points, cv::Scalar color, int lt, 
 
 struct BGR2YUVConverter
 {
-    cv::Scalar operator()(const cv::Scalar& bgr) const
+    cv::Scalar cvtColor(const cv::Scalar& bgr) const
     {
         int y = bgr[2] *  0.299000 + bgr[1] *  0.587000 + bgr[0] *  0.114000;
         int u = bgr[2] * -0.168736 + bgr[1] * -0.331264 + bgr[0] *  0.500000 + 128;
@@ -103,19 +103,19 @@ struct BGR2YUVConverter
 
         return {y, u, v};
     }
+
+    void cvtImg(const cv::Mat& in, cv::Mat& out) { cv::cvtColor(in, out, cv::COLOR_BGR2YUV); };
 };
 
 struct EmptyConverter
 {
-    cv::Scalar operator()(const cv::Scalar& bgr) const
-    {
-        return bgr;
-    }
+    cv::Scalar cvtColor(const cv::Scalar& bgr)   const { return bgr; };
+    void cvtImg(const cv::Mat& in, cv::Mat& out) const { out = in;   };
 };
 
 // FIXME util::visitor ?
 template <typename ColorConverter>
-void drawPrimitivesOCV(cv::Mat &bgr, const Prims &prims)
+void drawPrimitivesOCV(cv::Mat &in, const Prims &prims)
 {
     ColorConverter converter;
     for (const auto &p : prims)
@@ -125,16 +125,16 @@ void drawPrimitivesOCV(cv::Mat &bgr, const Prims &prims)
             case Prim::index_of<Rect>():
             {
                 const auto& t_p = cv::util::get<Rect>(p);
-                const auto color = converter(t_p.color);
-                cv::rectangle(bgr, t_p.rect, color , t_p.thick, t_p.lt, t_p.shift);
+                const auto color = converter.cvtColor(t_p.color);
+                cv::rectangle(in, t_p.rect, color , t_p.thick, t_p.lt, t_p.shift);
                 break;
             }
 
             case Prim::index_of<Text>():
             {
                 const auto& t_p = cv::util::get<Text>(p);
-                const auto color = converter(t_p.color);
-                cv::putText(bgr, t_p.text, t_p.org, t_p.ff, t_p.fs,
+                const auto color = converter.cvtColor(t_p.color);
+                cv::putText(in, t_p.text, t_p.org, t_p.ff, t_p.fs,
                             color, t_p.thick, t_p.lt, t_p.bottom_left_origin);
                 break;
             }
@@ -142,38 +142,42 @@ void drawPrimitivesOCV(cv::Mat &bgr, const Prims &prims)
             case Prim::index_of<Circle>():
             {
                 const auto& c_p = cv::util::get<Circle>(p);
-                const auto color = converter(c_p.color);
-                cv::circle(bgr, c_p.center, c_p.radius, color, c_p.thick, c_p.lt, c_p.shift);
+                const auto color = converter.cvtColor(c_p.color);
+                cv::circle(in, c_p.center, c_p.radius, color, c_p.thick, c_p.lt, c_p.shift);
                 break;
             }
 
             case Prim::index_of<Line>():
             {
                 const auto& l_p = cv::util::get<Line>(p);
-                const auto color = converter(l_p.color);
-                cv::line(bgr, l_p.pt1, l_p.pt2, color, l_p.thick, l_p.lt, l_p.shift);
+                const auto color = converter.cvtColor(l_p.color);
+                cv::line(in, l_p.pt1, l_p.pt2, color, l_p.thick, l_p.lt, l_p.shift);
                 break;
             }
 
             case Prim::index_of<Mosaic>():
             {
                 const auto& l_p = cv::util::get<Mosaic>(p);
-                mosaic(bgr, l_p.mos, l_p.cellSz);
+                mosaic(in, l_p.mos, l_p.cellSz);
                 break;
             }
 
             case Prim::index_of<Image>():
             {
                 const auto& i_p = cv::util::get<Image>(p);
-                image(bgr, i_p.x, i_p.y, i_p.img, i_p.alpha);
+
+                cv::Mat img;
+                converter.cvtImg(i_p.img, img);
+
+                image(in, i_p.x, i_p.y, img, i_p.alpha);
                 break;
             }
 
             case Prim::index_of<Poly>():
             {
                 const auto& p_p = cv::util::get<Poly>(p);
-                const auto color = converter(p_p.color);
-                poly(bgr, p_p.points, color, p_p.lt, p_p.shift);
+                const auto color = converter.cvtColor(p_p.color);
+                poly(in, p_p.points, color, p_p.lt, p_p.shift);
                 break;
             }
 

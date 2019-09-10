@@ -18,7 +18,6 @@ TEST_P(RenderNV12, AccuracyTest)
 
     cv::gapi::wip::draw::BGR2NV12(mat_gapi, y_mat_gapi, uv_mat_gapi);
     cv::gapi::wip::draw::render(y_mat_gapi, uv_mat_gapi, prims, pkg);
-
     ComputeRef();
 
     // FIXME move it to comparator
@@ -27,7 +26,6 @@ TEST_P(RenderNV12, AccuracyTest)
 
     double acc_threshold = 0.008; // difference not more than 0.8 %
     EXPECT_TRUE(std::less<double>()(accuracy, acc_threshold));
-    std::cout << accuracy << std::endl;
 }
 
 TEST_P(RenderBGR, AccuracyTest)
@@ -36,7 +34,6 @@ TEST_P(RenderBGR, AccuracyTest)
     Init();
 
     cv::gapi::wip::draw::render(mat_gapi, prims, pkg);
-
     ComputeRef();
 
     EXPECT_EQ(0, cv::norm(mat_gapi, mat_ocv));
