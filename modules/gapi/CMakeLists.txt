@@ -2,7 +2,6 @@
 # (Restructure directories, add common pass, etc)
 if (NOT DEFINED OPENCV_INITIAL_PASS)
     cmake_minimum_required(VERSION 3.3)
-    project(gapi_standalone)
     include("cmake/standalone.cmake")
     return()
 endif()
@@ -29,7 +28,6 @@ file(GLOB gapi_ext_hdrs
     "${CMAKE_CURRENT_LIST_DIR}/include/opencv2/${name}/ocl/*.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/include/opencv2/${name}/fluid/*.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/include/opencv2/${name}/own/*.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/include/opencv2/${name}/infer/*.hpp"
     )
 
 set(gapi_srcs
@@ -48,6 +46,7 @@ set(gapi_srcs
     src/api/kernels_core.cpp
     src/api/kernels_imgproc.cpp
     src/api/render.cpp
+    src/api/render_ocv.cpp
     src/api/ginfer.cpp
 
     # Compiler part
@@ -122,3 +121,29 @@ endif()
 
 ocv_add_perf_tests()
 ocv_add_samples()
+
+option(USE_MVD_OSD "Use external OSD library" OFF)
+if(USE_MVD_OSD)
+
+  #find osd library
+  find_library(osd_LIB OSD_LIB ${osd_DIR})
+  find_path(osd_INCLUDE osdApi.h ${osd_DIR})
+  add_library(osd SHARED IMPORTED)
+  set_target_properties(osd PROPERTIES
+                        INTERFACE_INCLUDE_DIRECTORIES ${osd_INCLUDE}
+                        IMPORTED_LOCATION ${osd_LIB}
+                        IMPORTED_IMPLIB ${osd_LIB})
+
+  #find bitmap library
+  find_library(bitmap_LIB BitmapLib ${bitmap_DIR})
+  find_path(bitmap_INCLUDE bitmap.hpp ${bitmap_DIR})
+  add_library(bitmap SHARED IMPORTED)
+  set_target_properties(bitmap PROPERTIES
+                        INTERFACE_INCLUDE_DIRECTORIES ${bitmap_INCLUDE}
+                        IMPORTED_LOCATION ${bitmap_LIB}
+                        IMPORTED_IMPLIB ${bitmap_LIB})
+
+  target_link_libraries(opencv_gapi PRIVATE osd bitmap)
+  target_compile_definitions(opencv_gapi PRIVATE USE_MVD_OSD)
+  target_compile_definitions(opencv_test_gapi PRIVATE USE_MVD_OSD)
+endif()
