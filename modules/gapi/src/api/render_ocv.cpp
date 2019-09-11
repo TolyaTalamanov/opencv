@@ -12,31 +12,6 @@ namespace gapi
 namespace ocv
 {
 
-void NV12ToYUV(const cv::Mat& y, const cv::Mat& uv, cv::Mat& yuv)
-{
-    yuv.create(y.size(), CV_8UC3);
-
-    for (int i = 0; i < uv.rows; ++i)
-    {
-        const uchar* uv_line = uv.ptr<uchar>(i);
-        for (int k = 0; k < 2; ++k)
-        {
-            const uchar* y_line   = y.ptr<uchar>(i * 2 + k);
-                  uchar* yuv_line = yuv.ptr<uchar>(i * 2 + k);
-            for (int j = 0; j < uv.cols; ++j)
-            {
-                yuv_line[j * 2 * 3    ] = y_line [2 * j    ];
-                yuv_line[j * 2 * 3 + 1] = uv_line[2 * j    ];
-                yuv_line[j * 2 * 3 + 2] = uv_line[2 * j + 1];
-
-                yuv_line[j * 2 * 3 + 3] = y_line [2 * j + 1];
-                yuv_line[j * 2 * 3 + 4] = uv_line[2 * j    ];
-                yuv_line[j * 2 * 3 + 5] = uv_line[2 * j + 1];
-            }
-        }
-    }
-}
-
 GAPI_OCV_KERNEL(GOCVRenderNV12, cv::gapi::wip::draw::GRenderNV12)
 {
     static void run(const cv::Mat& y, const cv::Mat& uv, const cv::gapi::wip::draw::Prims& prims,
@@ -60,6 +35,31 @@ GAPI_OCV_KERNEL(GOCVRenderNV12, cv::gapi::wip::draw::GRenderNV12)
          * 3) Convert yuv to NV12 (Here we can lose color, due uv downsampling)
          *
          */
+
+        auto NV12ToYUV = [](const cv::Mat& y_pln, const cv::Mat& uv_pln, cv::Mat& yuv_pln)
+        {
+            yuv_pln.create(y_pln.size(), CV_8UC3);
+
+            for (int i = 0; i < uv_pln.rows; ++i)
+            {
+                const uchar* uv_line = uv_pln.ptr<uchar>(i);
+                for (int k = 0; k < 2; ++k)
+                {
+                    const uchar* y_line   = y_pln.ptr<uchar>(i * 2 + k);
+                    uchar* yuv_line = yuv_pln.ptr<uchar>(i * 2 + k);
+                    for (int j = 0; j < uv_pln.cols; ++j)
+                    {
+                        yuv_line[j * 2 * 3    ] = y_line [2 * j    ];
+                        yuv_line[j * 2 * 3 + 1] = uv_line[2 * j    ];
+                        yuv_line[j * 2 * 3 + 2] = uv_line[2 * j + 1];
+
+                        yuv_line[j * 2 * 3 + 3] = y_line [2 * j + 1];
+                        yuv_line[j * 2 * 3 + 4] = uv_line[2 * j    ];
+                        yuv_line[j * 2 * 3 + 5] = uv_line[2 * j + 1];
+                    }
+                }
+            }
+        };
 
         cv::Mat yuv;
         NV12ToYUV(y, uv, yuv);

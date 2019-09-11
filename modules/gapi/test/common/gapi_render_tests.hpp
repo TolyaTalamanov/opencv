@@ -35,7 +35,8 @@
 #define mosaic1 Prim{cv::gapi::wip::draw::Mosaic{cv::Rect{100, 100, 200, 200}, 5, 0}}
 #define mosaics Prims{mosaic1}
 
-#define image1 Prim{cv::gapi::wip::draw::Image{100, 100, getImage(), getAlpha()}}
+#define image1 Prim{cv::gapi::wip::draw::Image{100, 100, cv::Mat(cv::Size(200, 200), CV_8UC3, cv::Scalar::all(255)),\
+                                                         cv::Mat(cv::Size(200, 200), CV_8UC3, cv::Scalar::all(1))}}
 #define images Prims{image1}
 
 #define polygon1 Prim{cv::gapi::wip::draw::Poly{ {cv::Point{100, 100}, cv::Point{50, 200}, cv::Point{200, 30}, cv::Point{150, 50} }, cv::Scalar{153, 172, 58}, 1, LINE_8, 0} }
@@ -49,20 +50,6 @@ namespace opencv_test
 
 using Prims = cv::gapi::wip::draw::Prims;
 using Prim  = cv::gapi::wip::draw::Prim;
-
-namespace
-{
-    // FIXME avoid this
-    cv::Mat getImage()
-    {
-        return cv::Mat(cv::Size(200, 200), CV_8UC3, cv::Scalar::all(255));
-    }
-
-    cv::Mat getAlpha()
-    {
-        return cv::Mat(cv::Size(200, 200), CV_8UC3, cv::Scalar::all(1));
-    }
-}
 
 template<class T>
 class RenderWithParam : public TestWithParam<T>
