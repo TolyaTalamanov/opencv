@@ -116,13 +116,11 @@ struct BGR2YUVConverter
 {
     cv::Scalar cvtColor(const cv::Scalar& bgr) const
     {
-        int y = bgr[2] *  0.299000 + bgr[1] *  0.587000 + bgr[0] *  0.114000;
-        int u = bgr[2] * -0.168736 + bgr[1] * -0.331264 + bgr[0] *  0.500000 + 128;
-        int v = bgr[2] *  0.500000 + bgr[1] * -0.418688 + bgr[0] * -0.081312 + 128;
+        double y = bgr[2] *  0.299000 + bgr[1] *  0.587000 + bgr[0] *  0.114000;
+        double u = bgr[2] * -0.168736 + bgr[1] * -0.331264 + bgr[0] *  0.500000 + 128;
+        double v = bgr[2] *  0.500000 + bgr[1] * -0.418688 + bgr[0] * -0.081312 + 128;
 
-        cv::Scalar yuv_color(y, u, v);
-
-        return yuv_color;
+        return {y, u, v};
     }
 
     void cvtImg(const cv::Mat& in, cv::Mat& out) { cv::cvtColor(in, out, cv::COLOR_BGR2YUV); };
