@@ -90,6 +90,10 @@ namespace wip
 namespace draw
 {
 
+void mosaic(cv::Mat mat, const cv::Rect &rect, int cellSz);
+void image(cv::Mat mat, int x, int y, cv::Mat img, cv::Mat alpha);
+void poly(cv::Mat mat, std::vector<cv::Point>, cv::Scalar color, int lt, int shift);
+
 void mosaic(cv::Mat mat, const cv::Rect &rect, int cellSz)
 {
     auto mos = mat(rect);
