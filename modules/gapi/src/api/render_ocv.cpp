@@ -21,51 +21,34 @@ GAPI_OCV_KERNEL(GOCVRenderNV12, cv::gapi::wip::draw::GRenderNV12)
          *
          * Rendering on NV11 via OpenCV looks like this:
          *
-         * y --------> 1)NV12toYUV -> yuv -> 2)draw -> yuv -> 3)split -------> out_y
-         *                  ^                                     |
-         *                  |                                     |
-         * uv --------------                                      `----------> out_uv
+         * y --------> 1)(NV12 -> YUV) -> yuv -> 2)draw -> yuv -> 3)split -------> out_y
+         *                  ^                                         |
+         *                  |                                         |
+         * uv --------------                                          `----------> out_uv
          *
          *
          * 1) Collect yuv mat from two planes, uv plain in two times less than y plane
-         *    so, upsample uv in tow times, with nearest neighbor interpolation
+         *    so, upsample uv in tow times, with bilinear interpolation
          *
          * 2) Render primitives on YUV
          *
-         * 3) Convert yuv to NV12 (Here we can lose color, due uv downsampling)
+         * 3) Convert yuv to NV12 (using bilinear interpolation)
          *
          */
 
-        auto NV12ToYUV = [](const cv::Mat& y_pln, const cv::Mat& uv_pln, cv::Mat& yuv_pln)
-        {
-            yuv_pln.create(y_pln.size(), CV_8UC3);
-
-            for (int i = 0; i < uv_pln.rows; ++i)
-            {
-                const uchar* uv_line = uv_pln.ptr<uchar>(i);
-                for (int k = 0; k < 2; ++k)
-                {
-                    const uchar* y_line   = y_pln.ptr<uchar>(i * 2 + k);
-                    uchar* yuv_line = yuv_pln.ptr<uchar>(i * 2 + k);
-                    for (int j = 0; j < uv_pln.cols; ++j)
-                    {
-                        yuv_line[j * 2 * 3    ] = y_line [2 * j    ];
-                        yuv_line[j * 2 * 3 + 1] = uv_line[2 * j    ];
-                        yuv_line[j * 2 * 3 + 2] = uv_line[2 * j + 1];
-
-                        yuv_line[j * 2 * 3 + 3] = y_line [2 * j + 1];
-                        yuv_line[j * 2 * 3 + 4] = uv_line[2 * j    ];
-                        yuv_line[j * 2 * 3 + 5] = uv_line[2 * j + 1];
-                    }
-                }
-            }
-        };
-
-        cv::Mat yuv;
-        NV12ToYUV(y, uv, yuv);
+        // NV12 -> YUV
+        cv::Mat upsample_uv, yuv;
+        cv::resize(uv, upsample_uv, uv.size() * 2, cv::INTER_LINEAR);
+        cv::merge(std::vector<cv::Mat>{y, upsample_uv}, yuv);
 
         cv::gapi::wip::draw::drawPrimitivesOCVYUV(yuv, prims);
-        cv::gapi::wip::draw::splitNV12TwoPlane(yuv, out_y, out_uv);
+
+        // YUV -> NV12
+        cv::Mat out_u, out_v, uv_plane;
+        std::vector<cv::Mat> chs = {out_y, out_u, out_v};
+        cv::split(yuv, chs);
+        cv::merge(std::vector<cv::Mat>{chs[1], chs[2]}, uv_plane);
+        cv::resize(uv_plane, out_uv, uv_plane.size() / 2, cv::INTER_LINEAR);
     }
 };
 

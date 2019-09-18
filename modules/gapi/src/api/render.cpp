@@ -31,37 +31,6 @@ void cv::gapi::wip::draw::render(cv::Mat &y_plane,
                cv::compile_args(pkg));
 }
 
-void cv::gapi::wip::draw::splitNV12TwoPlane(const cv::Mat& yuv,
-                                                  cv::Mat& y_plane,
-                                                  cv::Mat& uv_plane)
-{
-    y_plane.create(yuv.size(), CV_8UC1);
-    uv_plane.create(yuv.size() / 2, CV_8UC2);
-
-    // Fill Y plane
-    for (int i = 0; i < yuv.rows; ++i)
-    {
-        const uchar *in  = yuv.ptr<uchar>(i);
-        uchar *out = y_plane.ptr<uchar>(i);
-        for (int j = 0; j < yuv.cols; j++)
-        {
-            out[j] = in[3 * j];
-        }
-    }
-
-    // Fill UV plane
-    for (int i = 0; i < uv_plane.rows; i++)
-    {
-        const uchar *in = yuv.ptr<uchar>(2 * i);
-        uchar *out = uv_plane.ptr<uchar>(i);
-        for (int j = 0; j < uv_plane.cols; j++)
-        {
-            out[j * 2] = in[6 * j + 1];
-            out[j * 2 + 1] = in[6 * j + 2];
-        }
-    }
-}
-
 void cv::gapi::wip::draw::BGR2NV12(const cv::Mat &bgr,
                                    cv::Mat &y_plane,
                                    cv::Mat &uv_plane)
@@ -69,7 +38,13 @@ void cv::gapi::wip::draw::BGR2NV12(const cv::Mat &bgr,
     GAPI_Assert(bgr.size().width  % 2 == 0);
     GAPI_Assert(bgr.size().height % 2 == 0);
 
-    cv::Mat cpy;
-    cvtColor(bgr, cpy, cv::COLOR_BGR2YUV);
-    cv::gapi::wip::draw::splitNV12TwoPlane(cpy, y_plane, uv_plane);
+    cv::Mat yuv;
+    cvtColor(bgr, yuv, cv::COLOR_BGR2YUV);
+
+    std::vector<cv::Mat> chs(3);
+    cv::split(yuv, chs);
+    y_plane = chs[0];
+
+    cv::merge(std::vector<cv::Mat>{chs[1], chs[2]}, uv_plane);
+    cv::resize(uv_plane, uv_plane, uv_plane.size() / 2, cv::INTER_LINEAR);
 }
