@@ -60,7 +60,7 @@ protected:
         MatType type = CV_8UC3;
         mat_ocv.create(sz, type);
         mat_gapi.create(sz, type);
-        cv::randu(mat_ocv, cv::Scalar::all(255), cv::Scalar::all(255));
+        cv::randu(mat_ocv, cv::Scalar::all(0), cv::Scalar::all(255));
         mat_ocv.copyTo(mat_gapi);
     }
 
