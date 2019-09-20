@@ -77,9 +77,21 @@ struct RenderNV12 : public RenderWithParam<TestArgs>
 {
     void ComputeRef()
     {
-        cv::cvtColor(mat_ocv, mat_ocv, cv::COLOR_BGR2YUV);
-        cv::gapi::wip::draw::drawPrimitivesOCVYUV(mat_ocv, prims);
-        cv::gapi::wip::draw::splitNV12TwoPlane(mat_ocv, y_mat_ocv, uv_mat_ocv);
+        cv::gapi::wip::draw::BGR2NV12(mat_ocv, y_mat_ocv, uv_mat_ocv);
+
+        // NV12 -> YUV
+        cv::Mat upsample_uv, yuv;
+        cv::resize(uv_mat_ocv, upsample_uv, uv_mat_ocv.size() * 2, cv::INTER_LINEAR);
+        cv::merge(std::vector<cv::Mat>{y_mat_ocv, upsample_uv}, yuv);
+
+        cv::gapi::wip::draw::drawPrimitivesOCVYUV(yuv, prims);
+
+        // YUV -> NV12
+        std::vector<cv::Mat> chs(3);
+        cv::split(yuv, chs);
+        cv::merge(std::vector<cv::Mat>{chs[1], chs[2]}, uv_mat_ocv);
+        y_mat_ocv = chs[0];
+        cv::resize(uv_mat_ocv, uv_mat_ocv, uv_mat_ocv.size() / 2, cv::INTER_LINEAR);
     }
 };
 
