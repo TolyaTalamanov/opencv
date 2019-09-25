@@ -19,7 +19,7 @@ GAPI_OCV_KERNEL(GOCVRenderNV12, cv::gapi::wip::draw::GRenderNV12)
     {
         /* FIXME How to render correctly on NV12 format ?
          *
-         * Rendering on NV11 via OpenCV looks like this:
+         * Rendering on NV12 via OpenCV looks like this:
          *
          * y --------> 1)(NV12 -> YUV) -> yuv -> 2)draw -> yuv -> 3)split -------> out_y
          *                  ^                                         |
