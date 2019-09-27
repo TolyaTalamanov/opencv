@@ -79,10 +79,16 @@ void poly(cv::Mat mat, std::vector<cv::Point>, cv::Scalar color, int lt, int shi
 
 void mosaic(cv::Mat mat, const cv::Rect &rect, int cellSz)
 {
-    auto mos = mat(rect);
-    cv::Mat tmp;
-    cv::resize(mos, tmp, {mos.size().width/cellSz, mos.size().height/cellSz}, 0, 0, cv::INTER_LINEAR);
-    cv::resize(tmp, mos, {rect.width, rect.height}, 0, 0, cv::INTER_LINEAR);
+    cv::Mat msc_roi = mat(rect);
+    int crop_x = msc_roi.cols - (msc_roi.cols % cellSz);
+    int crop_y = msc_roi.rows - (msc_roi.rows % cellSz);
+
+    for(int i = 0; i < crop_y; i += cellSz ) {
+        for(int j = 0; j < crop_x; j += cellSz) {
+            cv::Mat cell_roi = msc_roi(cv::Rect(j, i, cellSz, cellSz));
+            cell_roi = cv::mean(cell_roi);
+        }
+    }
 };
 
 void image(cv::Mat mat, int x, int y, cv::Mat img, cv::Mat alpha)
