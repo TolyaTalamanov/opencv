@@ -100,10 +100,9 @@ struct Mosaic
  */
 struct Image
 {
-    int x;          //!< x-coord of image
-    int y;          //!< y-coord of image
-    cv::Mat img;    //!< Image to draw
-    cv::Mat alpha;  //!< Alpha channel for image to draw (same size and number of channels)
+    cv::Point org;   //!< The bottom-left corner of the image
+    cv::Mat   img;   //!< Image to draw
+    cv::Mat   alpha; //!< Alpha channel for image to draw (same size and number of channels)
 };
 
 /**

@@ -74,7 +74,7 @@ namespace draw
 {
 
 void mosaic(cv::Mat mat, const cv::Rect &rect, int cellSz);
-void image(cv::Mat mat, int x, int y, cv::Mat img, cv::Mat alpha);
+void image(cv::Mat mat, cv::Point org, cv::Mat img, cv::Mat alpha);
 void poly(cv::Mat mat, std::vector<cv::Point>, cv::Scalar color, int lt, int shift);
 
 void mosaic(cv::Mat mat, const cv::Rect &rect, int cellSz)
@@ -85,12 +85,24 @@ void mosaic(cv::Mat mat, const cv::Rect &rect, int cellSz)
     cv::resize(tmp, mos, {rect.width, rect.height}, 0, 0, cv::INTER_LINEAR);
 };
 
-void image(cv::Mat mat, int x, int y, cv::Mat img, cv::Mat alpha)
+void image(cv::Mat mat, cv::Point org, cv::Mat img, cv::Mat alpha)
 {
-    auto submat = mat(cv::Rect(x, y, img.size().width, img.size().height));
-    cv::Mat alp;
-    cv::multiply(alpha, img, alp);
-    alp.copyTo(submat);
+    auto roi = mat(cv::Rect(org.x, org.y, img.size().width, img.size().height));
+    cv::Mat img32f_w;
+    cv::merge(std::vector<cv::Mat>(3, alpha), img32f_w);
+
+    cv::Mat roi32f_w(roi.size(), CV_32FC3, cv::Scalar::all(1.0));
+    roi32f_w -= img32f_w;
+
+    cv::Mat img32f, roi32f;
+    img.convertTo(img32f, CV_32F, 1.0/255);
+    roi.convertTo(roi32f, CV_32F, 1.0/255);
+
+    cv::multiply(img32f, img32f_w, img32f);
+    cv::multiply(roi32f, roi32f_w, roi32f);
+    roi32f += img32f;
+
+    roi32f.convertTo(roi, CV_8U, 255.0);
 };
 
 void poly(cv::Mat mat, std::vector<cv::Point> points, cv::Scalar color, int lt, int shift)
@@ -175,7 +187,7 @@ void drawPrimitivesOCV(cv::Mat &in, const Prims &prims)
                 cv::Mat img;
                 converter.cvtImg(i_p.img, img);
 
-                image(in, i_p.x, i_p.y, img, i_p.alpha);
+                image(in, i_p.org, img, i_p.alpha);
                 break;
             }
 

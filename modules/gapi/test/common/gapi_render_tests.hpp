@@ -35,9 +35,16 @@
 #define mosaic1 Prim{cv::gapi::wip::draw::Mosaic{cv::Rect{100, 100, 200, 200}, 5, 0}}
 #define mosaics Prims{mosaic1}
 
-#define image1 Prim{cv::gapi::wip::draw::Image{100, 100, cv::Mat(cv::Size(200, 200), CV_8UC3, cv::Scalar::all(255)),\
-                                                         cv::Mat(cv::Size(200, 200), CV_8UC3, cv::Scalar::all(1))}}
-#define images Prims{image1}
+#define image1 Prim{cv::gapi::wip::draw::Image{cv::Point(100, 100), cv::Mat(cv::Size(200, 200), CV_8UC3, cv::Scalar::all(255)),\
+                                                                    cv::Mat(cv::Size(200, 200), CV_32FC1, cv::Scalar::all(1))}}
+
+#define image2 Prim{cv::gapi::wip::draw::Image{cv::Point(100, 100), cv::Mat(cv::Size(200, 200), CV_8UC3, cv::Scalar::all(255)),\
+                                                                    cv::Mat(cv::Size(200, 200), CV_32FC1, cv::Scalar::all(0.5))}}
+
+#define image3 Prim{cv::gapi::wip::draw::Image{cv::Point(100, 100), cv::Mat(cv::Size(200, 200), CV_8UC3, cv::Scalar::all(255)),\
+                                                                    cv::Mat(cv::Size(200, 200), CV_32FC1, cv::Scalar::all(0.0))}}
+
+#define images Prims{image1, image2, image3}
 
 #define polygon1 Prim{cv::gapi::wip::draw::Poly{ {cv::Point{100, 100}, cv::Point{50, 200}, cv::Point{200, 30}, cv::Point{150, 50} }, cv::Scalar{153, 172, 58}, 1, LINE_8, 0} }
 #define polygons Prims{polygon1}
