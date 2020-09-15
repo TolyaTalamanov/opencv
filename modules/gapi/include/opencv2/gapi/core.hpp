@@ -1418,7 +1418,7 @@ The function split3/split4 does the reverse operation.
 @sa  split4, split3
 */
 GAPI_EXPORTS GMat merge4(const GMat& src1, const GMat& src2, const GMat& src3, const GMat& src4);
-GAPI_EXPORTS GMat merge3(const GMat& src1, const GMat& src2, const GMat& src3);
+GAPI_EXPORTS_W GMat merge3(const GMat& src1, const GMat& src2, const GMat& src3);
 
 /** @brief Divides a 3-channel (4-channel) matrix into 3(4) single-channel matrices.
 
@@ -1434,7 +1434,7 @@ All output matrices must be in @ref CV_8UC1.
 @sa merge3, merge4
 */
 GAPI_EXPORTS std::tuple<GMat, GMat, GMat,GMat> split4(const GMat& src);
-GAPI_EXPORTS std::tuple<GMat, GMat, GMat> split3(const GMat& src);
+GAPI_EXPORTS_W std::tuple<GMat, GMat, GMat> split3(const GMat& src);
 
 /** @brief Applies a generic geometrical transformation to an image.
 
