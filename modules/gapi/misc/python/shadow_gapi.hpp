@@ -7,4 +7,7 @@ namespace cv
    class GAPI_EXPORTS_W_SIMPLE GProtoInputArgs {};
    class GAPI_EXPORTS_W_SIMPLE GProtoOutputArgs {};
    class GAPI_EXPORTS_W_SIMPLE GRunArg {};
+
+   using GProtoInputArgs  = GIOProtoArgs<In_Tag>;
+   using GProtoOutputArgs = GIOProtoArgs<Out_Tag>;
 } // namespace cv

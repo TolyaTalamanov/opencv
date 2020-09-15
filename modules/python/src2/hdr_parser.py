@@ -818,9 +818,6 @@ class CppHeaderParser(object):
             #print(state, self.lineno, l0)
 
             l = l0.strip()
-            
-            if ('GAPI_EXPORTS_W_SIMPLE' in l):
-                print('l = ', l)
 
             # G-API specific aliases
             l = self.batch_replace(l, [
@@ -942,6 +939,7 @@ class CppHeaderParser(object):
 
                 stmt = (block_head + " " + l[:pos]).strip()
                 stmt = " ".join(stmt.split()) # normalize the statement
+                #print(stmt)
                 stack_top = self.block_stack[-1]
 
                 if stmt.startswith("@"):

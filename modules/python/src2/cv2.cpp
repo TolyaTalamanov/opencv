@@ -45,6 +45,7 @@
 
 #define CV_HAS_CONVERSION_ERROR(x) (((x) == -1) && PyErr_Occurred())
 
+
 class ArgInfo
 {
 public:
@@ -83,7 +84,7 @@ static bool isPythonBindingsDebugEnabled()
 static void emit_failmsg(PyObject * exc, const char *msg)
 {
     static bool param_debug = isPythonBindingsDebugEnabled();
-     if (param_debug)
+    if (param_debug)
     {
         CV_LOG_WARNING(NULL, "Bindings conversion failed: " << msg);
     }
@@ -1890,7 +1891,6 @@ static int convert_to_char(PyObject *o, char *dst, const ArgInfo& info)
 
 
 #include "pyopencv_generated_enums.h"
-#include "pyopencv_custom_headers.h"
 
 #ifdef CVPY_DYNAMIC_INIT
 #define CVPY_TYPE(NAME, STORAGE, SNAME, _1, _2) CVPY_TYPE_DECLARE_DYNAMIC(NAME, STORAGE, SNAME)
@@ -1899,94 +1899,11 @@ static int convert_to_char(PyObject *o, char *dst, const ArgInfo& info)
 #endif
 #include "pyopencv_generated_types.h"
 #undef CVPY_TYPE
+#include "pyopencv_custom_headers.h"
 
 #include "pyopencv_generated_types_content.h"
 #include "pyopencv_generated_funcs.h"
 
-#ifdef HAVE_OPENCV_GAPI
-
-template <typename T>
-static PyObject* extract_proto_args(PyObject* py_args, PyObject* kw)
-{
-    using namespace cv;
-
-    GProtoArgs args;
-    Py_ssize_t size = PyTuple_Size(py_args);
-    for (int i = 0; i < size; ++i) {
-        PyObject* item = PyTuple_GetItem(py_args, i);
-        if (PyObject_TypeCheck(item, (PyTypeObject*)pyopencv_GScalar_TypePtr)) {
-            args.emplace_back((((pyopencv_GScalar_t*)item)->v));
-        } else if (PyObject_TypeCheck(item, (PyTypeObject*)pyopencv_GMat_TypePtr)) {
-            args.emplace_back((((pyopencv_GMat_t*)item)->v));
-        } else {
-            PyErr_SetString(PyExc_TypeError, "cv.GIn() supports only cv.GMat and cv.GScalar");
-            return NULL;
-        }
-    }
-
-    return pyopencv_from<T>(T{std::move(args)});
-}
-
-static PyObject* pyopencv_cv_GIn(PyObject* , PyObject* py_args, PyObject* kw)
-{
-    return extract_proto_args<GProtoInputArgs>(py_args, kw);
-}
-
-static PyObject* pyopencv_cv_GOut(PyObject* , PyObject* py_args, PyObject* kw)
-{
-    return extract_proto_args<GProtoOutputArgs>(py_args, kw);
-}
-
-static PyObject* pyopencv_cv_gin(PyObject* , PyObject* py_args, PyObject* kw)
-{
-    using namespace cv;
-
-    GRunArgs args;
-    Py_ssize_t size = PyTuple_Size(py_args);
-    for (int i = 0; i < size; ++i) {
-        PyObject* item = PyTuple_GetItem(py_args, i);
-        if (PyTuple_Check(item)) {
-            cv::Scalar s;
-            pyopencv_to(item, s, ArgInfo("scalar", i));
-            args.emplace_back(s);
-            // std::cout << "Scalar = " << s << std::endl;
-        } else if (PyArray_Check(item)) {
-            cv::Mat m;
-            pyopencv_to(item, m, ArgInfo("mat", i));
-            args.emplace_back(m);
-            // std::cout << "Mat = " << m << std::endl;
-        }
-    }
-
-    return pyopencv_from_generic_vec(args);
-}
-
-static PyObject* pyopencv_cv_gout(PyObject* o, PyObject* py_args, PyObject* kw)
-{
-    return pyopencv_cv_gin(o, py_args, kw);
-    //using namespace cv;
-
-    //GRunArgsP args;
-    //Py_ssize_t size = PyTuple_Size(py_args);
-    //for (int i = 0; i < size; ++i) {
-        //PyObject* item = PyTuple_GetItem(py_args, i);
-        //if (PyTuple_Check(item)) {
-            //cv::Scalar s;
-            //pyopencv_to(item, s, ArgInfo("scalar", i));
-            //args.emplace_back(&s);
-            //std::cout << "Scalar = " << s << std::endl;
-        //} else if (PyArray_Check(item)) {
-            //cv::Mat m;
-            //pyopencv_to(item, m, ArgInfo("mat", i));
-            //args.emplace_back(&m);
-            //std::cout << "Mat = " << m << std::endl;
-        //}
-    //}
-
-    //return pyopencv_from_generic_vec(args);
-}
-
-#endif
 
 static PyMethodDef special_methods[] = {
   {"redirectError", CV_PY_FN_WITH_KW(pycvRedirectError), "redirectError(onError) -> None"},

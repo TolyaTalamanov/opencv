@@ -20,11 +20,6 @@ bool pyopencv_to(PyObject* obj, GRunArgs& value, const ArgInfo& info)
     return pyopencv_to_generic_vec(obj, value, info);
 }
 
-//template<>
-//PyObject* pyopencv_from(const GRunArgs& value)
-//{
-    //return pyopencv_from_generic_vec(value);
-//}
 
 PyObject* from_grunarg(const GRunArg& v)
 {
@@ -62,55 +57,61 @@ PyObject* pyopencv_from(const GRunArgs& value)
     return seq;
 }
 
-//static cv::GProtoArgs parse_gin_gout_args(PyObject* py_args, PyObject* kw)
-//{
-    //using namespace cv;
+template <typename T>
+static PyObject* extract_proto_args(PyObject* py_args, PyObject* kw)
+{
+    using namespace cv;
 
-    //GProtoArgs args;
-    //GMat* gmat;
-    //GScalar* gscalar;
+    GProtoArgs args;
+    Py_ssize_t size = PyTuple_Size(py_args);
+    for (int i = 0; i < size; ++i) {
+        PyObject* item = PyTuple_GetItem(py_args, i);
+        if (PyObject_TypeCheck(item, (PyTypeObject*)pyopencv_GScalar_TypePtr)) {
+            args.emplace_back(((pyopencv_GScalar_t*)item)->v);
+        } else if (PyObject_TypeCheck(item, (PyTypeObject*)pyopencv_GMat_TypePtr)) {
+            args.emplace_back(((pyopencv_GMat_t*)item)->v);
+        } else {
+            PyErr_SetString(PyExc_TypeError, "cv.GIn() supports only cv.GMat and cv.GScalar");
+            return NULL;
+        }
+    }
 
-    //Py_ssize_t size = PyTuple_Size(py_args);
-    //std::cout << "SIZE = " << size << std::endl;
-    //// (void*)pyopencv_GScalar_getp;
-    //for (int i = 0; i < size; ++i) {
-        //PyObject* item = PyTuple_GetItem(py_args, i);
-        //checkPtr(GScalar, item, gscalar);
-        ////std::cout << "HERE" << std::endl;
-        ////if (PyObject_TypeCheck(self, (PyTypeObject*)pyopencv_GScalar_TypePtr)) {
-            ////std::cout << "GSCALAR " << std::endl;
-            ////args.emplace_back(*gscalar);
-        ////} else {
-            ////std::cout << "ERROR" << std::enld;
-        ////}
-        ////if (pyopencv_to(item, gmat, ArgInfo("", i))) {
-            ////std::cout << "GMAt " << std::endl;
-            ////args.emplace_back(gmat);
-        ////} else if (pyopencv_to(item, gscalar, ArgInfo("", i))) {
-            ////std::cout << "GSCALAR " << std::endl;
-            ////// args.emplace_back(gscalar);
-        ////} else {
-            ////// PyErr_SetString(PyExc_TypeError, "cv.GIn() supports only cv.GMat and cv.GScalar");
-            ////throw std::runtime_error("cv.GIn() supports only cv.GMat and cv.GScalar");
-            ////// throw "error";
-            ////// return NULL;
-        ////}
-    //}
-    //std::cout <<" end " << std::endl;
+    return pyopencv_from<T>(T{std::move(args)});
+}
 
-    //return args;
-//}
+static PyObject* pyopencv_cv_GIn(PyObject* , PyObject* py_args, PyObject* kw)
+{
+    return extract_proto_args<GProtoInputArgs>(py_args, kw);
+}
 
-//static PyObject* pyopencv_cv_GIn(PyObject* , PyObject* py_args, PyObject* kw)
-//{
-    //auto args = parse_gin_gout_args(py_args, kw);
-    //GProtoInputArgs in_args{std::move(args)};
-    //return pyopencv_from<GProtoInputArgs>(in_args);
-//}
+static PyObject* pyopencv_cv_GOut(PyObject* , PyObject* py_args, PyObject* kw)
+{
+    return extract_proto_args<GProtoOutputArgs>(py_args, kw);
+}
 
-//static PyObject* pyopencv_cv_GOut(PyObject* , PyObject* py_args, PyObject* kw)
-//{
-    //auto args = parse_gin_gout_args(py_args, kw);
-    //GProtoOutputArgs out_args{std::move(args)};
-    //return pyopencv_from<GProtoOutputArgs>(out_args);
-//}
+static PyObject* pyopencv_cv_gin(PyObject* , PyObject* py_args, PyObject* kw)
+{
+    using namespace cv;
+
+    GRunArgs args;
+    Py_ssize_t size = PyTuple_Size(py_args);
+    for (int i = 0; i < size; ++i) {
+        PyObject* item = PyTuple_GetItem(py_args, i);
+        if (PyTuple_Check(item)) {
+            cv::Scalar s;
+            pyopencv_to(item, s, ArgInfo("scalar", i));
+            args.emplace_back(s);
+        } else if (PyArray_Check(item)) {
+            cv::Mat m;
+            pyopencv_to(item, m, ArgInfo("mat", i));
+            args.emplace_back(m);
+        }
+    }
+
+    return pyopencv_from_generic_vec(args);
+}
+
+static PyObject* pyopencv_cv_gout(PyObject* o, PyObject* py_args, PyObject* kw)
+{
+    return pyopencv_cv_gin(o, py_args, kw);
+}
