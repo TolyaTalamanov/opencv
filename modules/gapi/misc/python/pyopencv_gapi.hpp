@@ -125,7 +125,6 @@ static PyObject* pyopencv_cv_gin(PyObject* , PyObject* py_args, PyObject* kw)
                 PyErr_SetString(PyExc_TypeError, "Failed convert array to cv::Mat");
                 return NULL;
             }
-            args.emplace_back(m);
         }
     }
 

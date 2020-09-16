@@ -65,8 +65,7 @@ class gapi_core_test(NewOpenCVTests):
 
         # G-API
         g_in = cv.GMat()
-        b,g,r = cv.gapi.split3(g_in)
-
+        b, g, r = cv.gapi.split3(g_in)
         comp = cv.GComputation(cv.GIn(g_in), cv.GOut(b, g, r))
 
         for pkg in pkgs:
