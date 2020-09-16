@@ -18,18 +18,18 @@ pkgs = [
 class gapi_sample_pipelines(NewOpenCVTests):
 
     # NB: This test check multiple outputs for operation
-    def test_swap_rb(self):
+    def test_mean_over_r(self):
         sz = (100, 100, 3)
         in_mat = np.random.randint(0, 100, sz).astype(np.uint8)
 
         # # OpenCV
-        b,g,r = cv.split(in_mat)
-        expected = cv.merge((r,g,b))
+        _, _, r_ch = cv.split(in_mat)
+        expected = cv.mean(r_ch)
 
         # G-API
         g_in = cv.GMat()
-        b,g,r = cv.gapi.split3(g_in)
-        g_out = cv.gapi.merge3(r,g,b)
+        b, g, r = cv.gapi.split3(g_in)
+        g_out = cv.gapi.mean(r)
         comp = cv.GComputation(g_in, g_out)
 
         actual = comp.apply(in_mat)
