@@ -168,31 +168,37 @@ void cv::GComputation::apply(const std::vector<cv::Mat> &ins,
 cv::GRunArgs cv::GComputation::apply(GRunArgs &&ins, GCompileArgs &&args)
 {
     auto& shape = m_priv->m_shape;
-    if (util::holds_alternative<cv::GComputation::Priv::Expr>(shape)) {
-        const auto& expr = cv::util::get<cv::GComputation::Priv::Expr>(shape);
-        std::vector<cv::Mat> mats;
-        GRunArgs run_args;
-        GRunArgsP outs;
-        for (auto&& p : expr.m_outs)
-        {
-            switch (p.index())
-            {
-                case GProtoArg::index_of<cv::GMat>():
-                {
-                    run_args.emplace_back(cv::Mat{});
-                    auto& m = cv::util::get<cv::Mat>(run_args.back());
-                    outs.emplace_back(&m);
-                    break;
-                }
+    GAPI_Assert(util::holds_alternative<cv::GComputation::Priv::Expr>(shape));
+    const auto& expr = cv::util::get<cv::GComputation::Priv::Expr>(shape);
 
-                default:
-                    GAPI_Assert(false);
+    GRunArgs run_args;
+    GRunArgsP outs;
+    run_args.reserve(expr.m_outs.size());
+    outs.reserve(expr.m_outs.size());
+
+    for (auto&& p : expr.m_outs)
+    {
+        switch (p.index())
+        {
+            case GProtoArg::index_of<cv::GMat>():
+            {
+                run_args.emplace_back(cv::Mat{});
+                outs.emplace_back(&cv::util::get<cv::Mat>(run_args.back()));
+                break;
             }
+            case GProtoArg::index_of<cv::GScalar>():
+            {
+                run_args.emplace_back(cv::Scalar{});
+                outs.emplace_back(&cv::util::get<cv::Scalar>(run_args.back()));
+                break;
+            }
+            default:
+                GAPI_Assert(false);
         }
-        apply(std::move(ins), std::move(outs), std::move(args));
-        return run_args;;
     }
-    GAPI_Assert(false);
+
+    apply(std::move(ins), std::move(outs), std::move(args));
+    return run_args;
 }
 
 #if !defined(GAPI_STANDALONE)

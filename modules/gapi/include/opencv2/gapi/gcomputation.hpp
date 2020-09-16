@@ -277,7 +277,7 @@ public:
      * @param args compilation arguments for underlying compilation
      * process.
      */
-    GAPI_WRAP void apply(cv::Mat in, CV_OUT cv::Mat &out, GCompileArgs &&args = {}); // Unary overload
+    void apply(cv::Mat in, CV_OUT cv::Mat &out, GCompileArgs &&args = {}); // Unary overload
 
     /**
      * @brief Execute an unary computation (with compilation on the fly)
