@@ -61,7 +61,7 @@ class gapi_core_test(NewOpenCVTests):
         in_mat = np.random.randint(0, 100, sz).astype(np.uint8)
 
         # OpenCV
-        b_ref,g_ref,r_ref = cv.split(in_mat)
+        expected = cv.split(in_mat)
 
         # G-API
         g_in = cv.GMat()
@@ -70,11 +70,32 @@ class gapi_core_test(NewOpenCVTests):
         comp = cv.GComputation(cv.GIn(g_in), cv.GOut(b, g, r))
 
         for pkg in pkgs:
-            b_actual, g_actual, r_actual = comp.apply(cv.gin(in_mat), args=cv.compile_args(pkg))
+            actual= comp.apply(cv.gin(in_mat), args=cv.compile_args(pkg))
             # Comparison
-            self.assertEqual(0.0, cv.norm(b_ref, b_actual, cv.NORM_INF))
-            self.assertEqual(0.0, cv.norm(g_ref, g_actual, cv.NORM_INF))
-            self.assertEqual(0.0, cv.norm(r_ref, r_actual, cv.NORM_INF))
+            for e, a in zip(expected, actual):
+                self.assertEqual(0.0, cv.norm(e, a, cv.NORM_INF))
+
+
+    def test_threshold(self):
+        sz = (3,3)
+        in_mat = np.random.randint(0, 100, sz).astype(np.uint8)
+        rand_int = np.random.randint(0, 50)
+        maxv = (rand_int, rand_int)
+
+        # OpenCV
+        expected_thresh, expected_mat = cv.threshold(in_mat, maxv[0], maxv[0], cv.THRESH_TRIANGLE)
+
+        # G-API
+        g_in = cv.GMat()
+        g_sc = cv.GScalar()
+        mat, threshold = cv.gapi.threshold(g_in, g_sc, cv.THRESH_TRIANGLE)
+        comp = cv.GComputation(cv.GIn(g_in, g_sc), cv.GOut(mat, threshold))
+
+        for pkg in pkgs:
+            actual_mat, actual_thresh = comp.apply(cv.gin(in_mat, maxv), args=cv.compile_args(pkg))
+            # Comparison
+            self.assertEqual(0.0, cv.norm(expected_mat, actual_mat, cv.NORM_INF))
+            self.assertEqual(expected_thresh, actual_thresh[0])
 
 
 if __name__ == '__main__':

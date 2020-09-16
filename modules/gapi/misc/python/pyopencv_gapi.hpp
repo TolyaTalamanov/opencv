@@ -21,7 +21,7 @@ bool pyopencv_to(PyObject* obj, GRunArgs& value, const ArgInfo& info)
 }
 
 
-PyObject* from_grunarg(const GRunArg& v)
+static PyObject* from_grunarg(const GRunArg& v)
 {
     switch (v.index())
     {
@@ -31,18 +31,24 @@ PyObject* from_grunarg(const GRunArg& v)
             return pyopencv_from(m);
         }
 
+        case GRunArg::index_of<cv::Scalar>():
+        {
+            const auto& s = util::get<cv::Scalar>(v);
+            return pyopencv_from(s);
+        }
+
         default:
-            GAPI_Assert(false);
+            return NULL;
     }
-    return NULL;
+    GAPI_Assert(false);
 }
 
 template<>
 PyObject* pyopencv_from(const GRunArgs& value)
 {
-    int i, n = (int)value.size();
+    size_t i, n = value.size();
     PyObject* seq = PyList_New(n);
-    for( i = 0; i < n; i++ )
+    for(i = 0; i < n; ++i)
     {
         PyObject* item = from_grunarg(value[i]);
         if(!item)
@@ -52,7 +58,7 @@ PyObject* pyopencv_from(const GRunArgs& value)
     if( i < n )
     {
         Py_DECREF(seq);
-        return 0;
+        return NULL;
     }
     return seq;
 }
@@ -99,11 +105,26 @@ static PyObject* pyopencv_cv_gin(PyObject* , PyObject* py_args, PyObject* kw)
         PyObject* item = PyTuple_GetItem(py_args, i);
         if (PyTuple_Check(item)) {
             cv::Scalar s;
-            pyopencv_to(item, s, ArgInfo("scalar", i));
-            args.emplace_back(s);
+            if (pyopencv_to(item, s, ArgInfo("scalar", i)))
+            {
+                args.emplace_back(s);
+            }
+            else
+            {
+                PyErr_SetString(PyExc_TypeError, "Failed convert tuple to cv::Scalar");
+                return NULL;
+            }
         } else if (PyArray_Check(item)) {
             cv::Mat m;
-            pyopencv_to(item, m, ArgInfo("mat", i));
+            if (pyopencv_to(item, m, ArgInfo("mat", i)))
+            {
+                args.emplace_back(m);
+            }
+            else
+            {
+                PyErr_SetString(PyExc_TypeError, "Failed convert array to cv::Mat");
+                return NULL;
+            }
             args.emplace_back(m);
         }
     }
