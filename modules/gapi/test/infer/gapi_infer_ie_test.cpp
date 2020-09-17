@@ -223,7 +223,9 @@ struct ROIList: public ::testing::Test {
 
     ROIList() {
         initDLDTDataPath();
-        std::tie(params.model_path, params.weights_path) = findModel("age-gender-recognition-retail-0013");
+        //std::tie(params.model_path, params.weights_path) = findModel("age-gender-recognition-retail-0013");
+        params.model_path = "/home/atalaman/workspace/opencv_extra/testdata/dnn/omz_intel_models/intel/age-gender-recognition-retail-0013/FP32/age-gender-recognition-retail-0013.xml";
+        params.weights_path = "/home/atalaman/workspace/opencv_extra/testdata/dnn/omz_intel_models/intel/age-gender-recognition-retail-0013/FP32/age-gender-recognition-retail-0013.bin";
         params.device_id = "CPU";
 
         // FIXME: it must be cv::imread(findDataFile("../dnn/grace_hopper_227.png", false));
