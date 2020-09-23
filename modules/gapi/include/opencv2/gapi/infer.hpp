@@ -21,6 +21,11 @@
 #include <opencv2/gapi/garg.hpp>      // GArg
 #include <opencv2/gapi/gcommon.hpp>   // CompileArgTag
 #include <opencv2/gapi/gmetaarg.hpp>  // GMetaArg
+#include "api/gproto_priv.hpp" // origin_of
+
+#include "api/gnode_priv.hpp"
+#include "api/gnode.hpp"
+#include "api/gcall_priv.hpp"
 
 namespace cv {
 
@@ -121,6 +126,33 @@ struct GInferBase {
     }
 };
 
+struct GInferInputs {
+public:
+    cv::GMat& operator[](const std::string& layer_name) { return blobs[layer_name]; }
+    std::unordered_map<std::string, cv::GMat> blobs;
+};
+
+struct GInferOutputs {
+public:
+    GInferOutputs(cv::GKernel kernel, std::vector<cv::GArg> args) :
+        m_call(std::move(kernel)) {
+            m_call.setArgs(std::move(args));
+        };
+    cv::GMat at(const std::string& layer_name) {
+        auto it = blobs.find(layer_name);
+        if (it == blobs.end()) {
+            std::cout << "before out" << std::endl;
+            auto out = m_call.yield(num_outs++, layer_name);
+            std::cout << "after out" << std::endl;
+            it = blobs.emplace(layer_name, std::move(out)).first;
+        }
+        return it->second;
+    };
+private:
+    int num_outs = 0;
+    std::unordered_map<std::string, cv::GMat> blobs;
+    cv::GCall m_call;
+};
 
 // Base "Infer list" kernel.
 // All notes from "Infer" kernel apply here as well.
@@ -254,6 +286,124 @@ typename Net::Result infer(Args&&... args) {
     return GInfer<Net>::on(std::forward<Args>(args)...);
 }
 
+class GNetwork
+{
+public:
+    friend GProtoArgs infer(const GNetwork& net);
+    GNetwork(std::string id, GProtoInputArgs ins, GShapes shapes)
+        : m_id(std::move(id)), m_ins(std::move(ins.m_args)), m_shapes(std::move(shapes))
+    {
+        m_kinds.reserve(m_shapes.size());
+        for (auto&& shape : m_shapes)
+        {
+            switch (shape)
+            {
+                case cv::GShape::GMAT:
+                    m_kinds.push_back(cv::detail::OpaqueKind::CV_MAT);
+                    break;
+                case cv::GShape::GARRAY:
+                    m_kinds.push_back(cv::detail::OpaqueKind::CV_MAT);
+                    break;
+                default:
+                    cv::util::throw_error("Unsupported output shape for GNetwork");
+            }
+        }
+        cv::GCall call(GKernel{ m_id
+                              , m_tag
+                              , nullptr
+                              , m_shapes
+                              , m_kinds});
+
+        std::cout << "HHHHHHHHHHHHHHHHHHHHHH" << std::endl;
+        auto to_garg = [](const GProtoArg& proto) {
+            switch (proto.index())
+            {
+                case GProtoArg::index_of<cv::GMat>():
+                    return cv::GArg{util::get<cv::GMat>(proto)};
+
+                case GProtoArg::index_of<cv::GScalar>():
+                    return cv::GArg{util::get<cv::GScalar>(proto)};
+
+                case GProtoArg::index_of<cv::detail::GArrayU>():
+                    return cv::GArg{util::get<cv::detail::GArrayU>(proto)};
+
+                default:
+                    cv::util::throw_error("Unsupported input for GNetwork");
+            };
+        };
+        std::cout << "HHHHHHHHHHHHHHHHHHHHHH" << std::endl;
+
+        GArgs args;
+        std::transform(m_ins.begin(), m_ins.end(), std::back_inserter(args), to_garg);
+        std::cout << "1" << std::endl;
+        call.setArgs(std::move(args));
+        std::cout << "2" << std::endl;
+
+        int i = 0;
+        std::cout << "========" << std::endl;
+        for (auto&& shape : m_shapes)
+        {
+            std::cout << "!!!!=======" << std::endl;
+            switch (shape)
+            {
+                case cv::GShape::GMAT: {
+                    auto y = call.yield(i++);
+                    m_outs.emplace_back(y);
+                    break;
+                                       }
+                case cv::GShape::GARRAY: {
+                    auto a = call.yieldArray<cv::GMat>(i++);
+                    m_outs.emplace_back(a.strip());
+                    break;
+                                       }
+                default:
+                    cv::util::throw_error("Unsupported output shape for GNetwork");
+            }
+        }
+        std::cout << "6" << std::endl;
+        std::cout << "HHHHHHHHHHHHHHHHHHHHHH" << std::endl;
+    }
+private:
+    GProtoArgs m_ins;
+    GProtoArgs m_outs;
+    GShapes m_shapes;
+    GKinds m_kinds;
+    std::string m_id;
+    std::string m_tag;
+};
+
+inline GInferOutputs infer(const std::string& name, const GInferInputs& inputs_blob)
+{
+    GShapes shapes;
+    GKinds kinds;
+    for (int i = 0; i < inputs_blob.blobs.size(); ++i)
+    {
+        shapes.push_back(cv::GShape::GMAT);
+        kinds.push_back(cv::detail::OpaqueKind::CV_MAT);
+    }
+
+    std::cout << "cretae " << std::endl;
+    cv::GCall call(GKernel{ GInferBase::id()
+                          , name
+                          , nullptr
+                          , shapes
+                          , kinds});
+    std::cout << "after create " << std::endl;
+    call.yield(0,"prob");
+    std::cout << "after yield" << std::endl;
+    std::vector<GArg> args;
+    auto to_garg = [](const std::pair<std::string, cv::GMat>& p) { return cv::GArg(p.second); };
+    std::transform(inputs_blob.blobs.begin(), inputs_blob.blobs.end(), std::back_inserter(args), to_garg);
+    //call.setArgs(std::move(args));
+
+    std::cout << "MOVE" << std::endl;
+    GKernel kernel{ GInferBase::id()
+        , name
+            , nullptr
+            , shapes
+            , kinds};
+    return GInferOutputs{std::move(kernel), std::move(args)};
+}
 
 } // namespace gapi
 } // namespace cv

@@ -14,9 +14,10 @@
 cv::GOrigin::GOrigin(GShape s,
                     const cv::GNode& n,
                     std::size_t p,
+                    cv::util::optional<std::string> _name,
                     const cv::gimpl::HostCtor c,
                     cv::detail::OpaqueKind k)
-    : shape(s), node(n), port(p), ctor(c), kind(k)
+    : shape(s), node(n), port(p), name(_name), ctor(c), kind(k)
 {
 }
 

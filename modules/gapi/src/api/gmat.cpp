@@ -14,6 +14,8 @@
 #include <opencv2/gapi/gmat.hpp>
 
 #include "api/gorigin.hpp"
+#include "api/gnode_priv.hpp"
+#include "api/gnode.hpp"
 
 // cv::GMat public implementation //////////////////////////////////////////////
 cv::GMat::GMat()
@@ -21,8 +23,8 @@ cv::GMat::GMat()
 {
 }
 
-cv::GMat::GMat(const GNode &n, std::size_t out)
-    : m_priv(new GOrigin(GShape::GMAT, n, out))
+cv::GMat::GMat(const GNode &n, std::size_t out, cv::util::optional<std::string> name)
+    : m_priv(new GOrigin(GShape::GMAT, n, out, name))
 {
 }
 

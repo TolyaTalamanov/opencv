@@ -39,6 +39,8 @@ public:
 
     // A generic yield method - obtain a link to operator's particular GMat output
     GMat    yield      (int output = 0);
+    GMat    yield      (int output, std::string name);
+
     GMatP   yieldP     (int output = 0);
     GScalar yieldScalar(int output = 0);
 
@@ -56,10 +58,10 @@ public:
     Priv& priv();
     const Priv& priv() const;
 
+    void setArgs(std::vector<GArg> &&args);
+
 protected:
     std::shared_ptr<Priv> m_priv;
-
-    void setArgs(std::vector<GArg> &&args);
 
     // Public versions return a typed array or opaque, those are implementation details
     detail::GArrayU yieldArray(int output = 0);

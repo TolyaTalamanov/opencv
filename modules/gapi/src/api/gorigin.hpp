@@ -29,14 +29,17 @@ struct GOrigin
     GOrigin(GShape s,
             const GNode& n,
             std::size_t p = INVALID_PORT,
+            cv::util::optional<std::string> _name = {},
             const gimpl::HostCtor h = {},
             cv::detail::OpaqueKind kind = cv::detail::OpaqueKind::CV_UNKNOWN);
+
     GOrigin(GShape s, gimpl::ConstVal value);
 
     const GShape          shape;           // Shape of a produced object
     const GNode           node;            // a GNode which produces an object
     const gimpl::ConstVal value;           // Node can have initial constant value, now only scalar is supported
     const std::size_t     port;            // GNode's output number; FIXME: "= max_size" in C++14
+    cv::util::optional<std::string> name;
     gimpl::HostCtor       ctor;            // FIXME: replace with an interface?
     detail::OpaqueKind    kind;            // primary is needed for GOpaque and GArray
 };

@@ -84,6 +84,7 @@ struct Data
                     // Note: CONST is sometimes defined in Win sys headers
     };
     Storage storage;
+    cv::util::optional<std::string> n;
 };
 
 struct ConstValue

@@ -9,6 +9,9 @@
 #include <cassert>
 #include <opencv2/gapi/gcall.hpp>
 #include "api/gcall_priv.hpp"
+#include "api/gnode_priv.hpp"
+#include "api/gnode.hpp"
+#include "api/gorigin.hpp"
 
 // GCall private implementation ////////////////////////////////////////////////
 cv::GCall::Priv::Priv(const cv::GKernel &k)
@@ -24,6 +27,8 @@ cv::GCall::GCall(const cv::GKernel &k)
     // Here we have a reference to GNode,
     // and GNode has a reference to us. Cycle! Now see destructor.
     m_priv->m_node = GNode::Call(*this);
+    std::cout << "m_priv->m_node is called = " << std::boolalpha << (m_priv->m_node.shape() == cv::GNode::NodeShape::CALL) << std::endl;
+    std::cout << "m_node = " << &(m_priv->m_node) << std::endl;
 }
 
 cv::GCall::~GCall()
@@ -35,6 +40,7 @@ cv::GCall::~GCall()
 
     // When a GCall object is destroyed (and GCall::Priv is likely still alive,
     // as there might be other references), reset m_node to break cycle.
+    std::cout << "~GCall() " << std::endl;
     m_priv->m_node = GNode();
 }
 
@@ -46,7 +52,19 @@ void cv::GCall::setArgs(std::vector<GArg> &&args)
 
 cv::GMat cv::GCall::yield(int output)
 {
+    bool is_call = (m_priv->m_node.shape() == cv::GNode::NodeShape::EMPTY);
     return cv::GMat(m_priv->m_node, output);
+}
+
+cv::GMat cv::GCall::yield(int output, std::string name)
+{
+    std::cout << "yield m_node = " << &(m_priv->m_node) << std::endl;
+    bool is_call = (m_priv->m_node.shape() == cv::GNode::NodeShape::CALL);
+    std::cout << "is call = " << std::boolalpha << is_call << std::endl;
+    //return cv::GMat(m_priv->m_node, output, cv::util::optional<std::string>(name));
+    auto mat = cv::GMat(m_priv->m_node, output, cv::util::optional<std::string>(name));
+    auto& n = mat.priv().node;
+    return mat;
 }
 
 cv::GMatP cv::GCall::yieldP(int output)

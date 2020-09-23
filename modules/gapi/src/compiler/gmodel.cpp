@@ -54,7 +54,7 @@ ade::NodeHandle GModel::mkDataNode(GModel::Graph &g, const GOrigin& origin)
     // associated host-type constructor (e.g. when the array is
     // somewhere in the middle of the graph).
     auto ctor_copy = origin.ctor;
-    g.metadata(data_h).set(Data{origin.shape, id, meta, ctor_copy, origin.kind, storage});
+    g.metadata(data_h).set(Data{origin.shape, id, meta, ctor_copy, origin.kind, storage, origin.name});
     return data_h;
 }
 

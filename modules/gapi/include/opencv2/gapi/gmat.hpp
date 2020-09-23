@@ -50,7 +50,7 @@ class GAPI_EXPORTS_W_SIMPLE GMat
 {
 public:
     GAPI_WRAP GMat();                       // Empty constructor
-    GMat(const GNode &n, std::size_t out);  // Operation result constructor
+    GMat(const GNode &n, std::size_t out, cv::util::optional<std::string> name = {});  // Operation result constructor
 
     GOrigin& priv();                        // Internal use only
     const GOrigin& priv()  const;           // Internal use only

@@ -279,39 +279,87 @@ struct ROIList: public ::testing::Test {
     }
 }; // ROIList
 
+//TEST_F(ROIList, TestInfer)
+//{
+    //cv::GArray<cv::Rect> rr;
+    //cv::GMat in;
+    //cv::GArray<cv::GMat> age, gender;
+    //std::tie(age, gender) = cv::gapi::infer<AgeGender>(rr, in);
+    //cv::GComputation comp(cv::GIn(in, rr), cv::GOut(age, gender));
+
+    //auto pp = cv::gapi::ie::Params<AgeGender> {
+        //params.model_path, params.weights_path, params.device_id
+    //}.cfgOutputLayers({ "age_conv3", "prob" });
+    //comp.apply(cv::gin(m_in_mat, m_roi_list),
+               //cv::gout(m_out_gapi_ages, m_out_gapi_genders),
+               //cv::compile_args(cv::gapi::networks(pp)));
+    //validate();
+//}
+
 TEST_F(ROIList, TestInfer)
 {
     cv::GArray<cv::Rect> rr;
     cv::GMat in;
-    cv::GArray<cv::GMat> age, gender;
-    std::tie(age, gender) = cv::gapi::infer<AgeGender>(rr, in);
-    cv::GComputation comp(cv::GIn(in, rr), cv::GOut(age, gender));
+    cv::GInferInputs input_blobs;
+    input_blobs["data"] = in;
 
-    auto pp = cv::gapi::ie::Params<AgeGender> {
-        params.model_path, params.weights_path, params.device_id
-    }.cfgOutputLayers({ "age_conv3", "prob" });
-    comp.apply(cv::gin(m_in_mat, m_roi_list),
-               cv::gout(m_out_gapi_ages, m_out_gapi_genders),
-               cv::compile_args(cv::gapi::networks(pp)));
-    validate();
+    auto outputs = cv::gapi::infer("net-age-gender", input_blobs);
+
+    auto age    = outputs.at("age_conv3");
+    auto gender = outputs.at("prob");
+
+    //cv::GComputation comp(cv::GIn(in), cv::GOut(age, gender));
+    cv::GComputation comp(cv::GIn(in), cv::GOut(gender));
+
+    auto pp = cv::gapi::ie::Params{"net-age-gender"
+        params.model_path, params.weights_path, params.device_i
+    };
+
+    comp.compile(cv::descr_of(m_in_mat));
+
+    //comp.apply(cv::gin(m_in_mat, m_roi_list),
+               //cv::gout(m_out_gapi_ages, m_out_gapi_genders),
+               //cv::compile_args(cv::gapi::networks(pp)));
+    //validate();
 }
 
-TEST_F(ROIList, TestInfer2)
-{
-    cv::GArray<cv::Rect> rr;
-    cv::GMat in;
-    cv::GArray<cv::GMat> age, gender;
-    std::tie(age, gender) = cv::gapi::infer2<AgeGender>(in, rr);
-    cv::GComputation comp(cv::GIn(in, rr), cv::GOut(age, gender));
+//TEST_F(ROIList, TestInfer)
+//{
+    //cv::GMat in;
+    //cv::GInferInputs inputs;
+    //inputs["data"] = in;
+    ////auto net = cv::gapi::GNetwork("my-age-gender", cv::GIn(in, rr), {cv::GShape::GMAT, cv::GShape::GMAT});
+    ////auto net = cv::gapi::GNetwork("my-age-gender", cv::GIn(in, rr), {cv::GShape::GARRAY, cv::GShape::GARRAY});
+    ////cv::GArray<cv::GMat> age, gender;
+    ////auto outputs = cv::gapi::infer(net);
+    //auto outputs = cv::gap::infer(inputs, "test-age-gender");
+    ////cv::GComputation comp(cv::GIn(in, rr), cv::GOut(age, gender));
 
-    auto pp = cv::gapi::ie::Params<AgeGender> {
-        params.model_path, params.weights_path, params.device_id
-    }.cfgOutputLayers({ "age_conv3", "prob" });
-    comp.apply(cv::gin(m_in_mat, m_roi_list),
-               cv::gout(m_out_gapi_ages, m_out_gapi_genders),
-               cv::compile_args(cv::gapi::networks(pp)));
-    validate();
-}
+    ////auto pp = cv::gapi::ie::Params<AgeGender> {
+        ////params.model_path, params.weights_path, params.device_id
+    ////}.cfgOutputLayers({ "age_conv3", "prob" });
+    ////comp.apply(cv::gin(m_in_mat, m_roi_list),
+               ////cv::gout(m_out_gapi_ages, m_out_gapi_genders),
+               ////cv::compile_args(cv::gapi::networks(pp)));
+    ////validate();
+//}
+
+//TEST_F(ROIList, TestInfer2)
+//{
+    //cv::GArray<cv::Rect> rr;
+    //cv::GMat in;
+    //cv::GArray<cv::GMat> age, gender;
+    //std::tie(age, gender) = cv::gapi::infer2<AgeGender>(in, rr);
+    //cv::GComputation comp(cv::GIn(in, rr), cv::GOut(age, gender));
+
+    //auto pp = cv::gapi::ie::Params<AgeGender> {
+        //params.model_path, params.weights_path, params.device_id
+    //}.cfgOutputLayers({ "age_conv3", "prob" });
+    //comp.apply(cv::gin(m_in_mat, m_roi_list),
+               //cv::gout(m_out_gapi_ages, m_out_gapi_genders),
+               //cv::compile_args(cv::gapi::networks(pp)));
+    //validate();
+//}
 
 TEST(DISABLED_TestTwoIENNPipeline, InferBasicImage)
 {

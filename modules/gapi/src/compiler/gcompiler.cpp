@@ -359,6 +359,12 @@ void cv::gimpl::GCompiler::validateOutProtoArgs()
     for (const auto &out_pos : ade::util::indexed(c_expr.m_outs))
     {
         const auto &node = proto::origin_of(ade::util::value(out_pos)).node;
+        const auto &name = proto::origin_of(ade::util::value(out_pos)).name.value();
+        std::cout << "name = " << name << std::endl;
+        std::cout << "node shape == empty " << std::boolalpha << (node.shape() == cv::GNode::NodeShape::EMPTY) << std::endl;
+        std::cout << "node shape == empty " << std::boolalpha << (node.shape() == cv::GNode::NodeShape::CALL) << std::endl;
+        std::cout << "node shape == empty " << std::boolalpha << (node.shape() == cv::GNode::NodeShape::PARAM) << std::endl;
+        std::cout << "node shape == empty " << std::boolalpha << (node.shape() == cv::GNode::NodeShape::CONST_BOUNDED) << std::endl;
         if (node.shape() != cv::GNode::NodeShape::CALL)
         {
             auto pos = ade::util::index(out_pos);

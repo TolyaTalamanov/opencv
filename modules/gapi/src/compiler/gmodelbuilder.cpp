@@ -139,7 +139,7 @@ cv::gimpl::Unrolled cv::gimpl::unrollExpr(const GProtoArgs &ins,
                     std::size_t port  = ade::util::index(it);
                     GShape shape      = ade::util::value(it);
 
-                    GOrigin org { shape, node, port, {}, origin.kind };
+                    GOrigin org { shape, node, port, {}, {}, origin.kind };
                     origins.insert(org);
                 }
 
