@@ -50,7 +50,6 @@ class test_gapi_infer(NewOpenCVTests):
         pp = cv.gapi.ie.params("net", model_path, weights_path, device_id)
 
         nets = cv.gapi.networks(pp)
-        args = cv.compile_args(nets)
         gapi_age, gapi_gender = comp.apply(cv.gin(img), args=cv.compile_args(cv.gapi.networks(pp)))
 
         # Check
