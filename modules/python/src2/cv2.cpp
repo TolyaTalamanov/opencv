@@ -1483,6 +1483,26 @@ template<typename _Tp> static inline bool pyopencv_to_generic_vec(PyObject* obj,
     return true;
 }
 
+template<>
+bool pyopencv_to_generic_vec<bool>(PyObject* obj, std::vector<bool>& value, const ArgInfo& info)
+{
+    if(!obj || obj == Py_None)
+       return true;
+    if (!PySequence_Check(obj))
+        return false;
+    size_t n = PySequence_Size(obj);
+    value.resize(n);
+    for(size_t i = 0; i < n; i++ )
+    {
+        SafeSeqItem item_wrap(obj, i);
+        bool elem;
+        if(!pyopencv_to(item_wrap.item, elem, info))
+            return false;
+        value[i] = elem;
+    }
+    return true;
+}
+
 template<typename _Tp> static inline PyObject* pyopencv_from_generic_vec(const std::vector<_Tp>& value)
 {
     int i, n = (int)value.size();
@@ -1490,6 +1510,27 @@ template<typename _Tp> static inline PyObject* pyopencv_from_generic_vec(const s
     for( i = 0; i < n; i++ )
     {
         PyObject* item = pyopencv_from(value[i]);
+        if(!item)
+            break;
+        PyList_SetItem(seq, i, item);
+    }
+    if( i < n )
+    {
+        Py_DECREF(seq);
+        return 0;
+    }
+    return seq;
+}
+
+template<>
+PyObject* pyopencv_from_generic_vec<bool>(const std::vector<bool>& value)
+{
+    int i, n = (int)value.size();
+    PyObject* seq = PyList_New(n);
+    for( i = 0; i < n; i++ )
+    {
+        bool elem = value[i];
+        PyObject* item = pyopencv_from(elem);
         if(!item)
             break;
         PyList_SetItem(seq, i, item);
@@ -1955,7 +1996,6 @@ static int convert_to_char(PyObject *o, char *dst, const ArgInfo& info)
 #include "pyopencv_generated_types_content.h"
 #include "pyopencv_generated_funcs.h"
 
-
 static PyMethodDef special_methods[] = {
   {"redirectError", CV_PY_FN_WITH_KW(pycvRedirectError), "redirectError(onError) -> None"},
 #ifdef HAVE_OPENCV_HIGHGUI
@@ -1970,7 +2010,7 @@ static PyMethodDef special_methods[] = {
 #ifdef HAVE_OPENCV_GAPI
   {"GIn", CV_PY_FN_WITH_KW(pyopencv_cv_GIn), "GIn(...) -> GInputProtoArgs"},
   {"GOut", CV_PY_FN_WITH_KW(pyopencv_cv_GOut), "GOut(...) -> GOutputProtoArgs"},
-  {"gin", CV_PY_FN_WITH_KW(pyopencv_cv_gin), "gin(...) -> GRunArgs"},
+  {"gin", CV_PY_FN_WITH_KW(pyopencv_cv_gin), "gin(...) -> ExtractArgsCallback"},
 #endif
   {NULL, NULL},
 };
