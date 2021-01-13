@@ -32,6 +32,7 @@ using GArray_Size     = cv::GArray<cv::Size>;
 using GArray_Rect     = cv::GArray<cv::Rect>;
 using GArray_Scalar   = cv::GArray<cv::Scalar>;
 using GArray_Mat      = cv::GArray<cv::Mat>;
+using GArray_GMat     = cv::GArray<cv::GMat>;
 
 // FIXME: Python wrapper generate code without namespace std,
 // so it cause error: "string wasn't declared"

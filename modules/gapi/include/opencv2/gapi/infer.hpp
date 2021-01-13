@@ -595,9 +595,30 @@ infer2(const std::string& tag,
     return GInferListOutputs{std::move(call)};
 }
 
-GAPI_EXPORTS_W inline GInferOutputs infer(const String& name, const GInferInputs& inputs)
+GAPI_EXPORTS_W inline GInferOutputs infer(const std::string& tag, const GInferInputs& inputs)
 {
-    return infer<Generic>(name, inputs);
+    return infer<Generic>(tag, inputs);
+}
+
+GAPI_EXPORTS_W inline GInferOutputs infer(const std::string& tag,
+                                          const cv::GOpaque<cv::Rect>& roi,
+                                          const GInferInputs& inputs)
+{
+    return infer<Generic>(tag, roi, inputs);
+}
+
+GAPI_EXPORTS_W inline GInferListOutputs infer(const std::string& tag,
+                                              const cv::GArray<cv::Rect>& rois,
+                                              const GInferInputs& inputs)
+{
+    return infer<Generic>(tag, rois, inputs);
+}
+
+GAPI_EXPORTS_W inline GInferListOutputs infer2(const std::string& tag,
+                                               const cv::GMat in,
+                                               const GInferListInputs& inputs)
+{
+    return infer2<Generic>(tag, in, inputs);
 }
 
 } // namespace gapi

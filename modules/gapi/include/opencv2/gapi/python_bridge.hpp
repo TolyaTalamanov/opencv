@@ -28,6 +28,7 @@ enum ArgType {
     CV_RECT,
     CV_SCALAR,
     CV_MAT,
+    CV_GMAT,
 };
 
 } // namespace gapi
@@ -115,7 +116,8 @@ struct GAPI_EXPORTS_W_SIMPLE GArrayT
                                     , cv::Size
                                     , cv::Rect
                                     , cv::Scalar
-                                    , cv::Mat>;
+                                    , cv::Mat
+                                    , cv::GMat>;
     template<typename T>
     GArrayT(cv::GArray<T> opaque) : arg(opaque) { };
 
@@ -139,6 +141,7 @@ struct GAPI_EXPORTS_W_SIMPLE GArrayT
             HANDLE_CASE(RECT,    cv::Rect);
             HANDLE_CASE(SCALAR,  cv::Scalar);
             HANDLE_CASE(MAT,     cv::Mat);
+            HANDLE_CASE(GMAT,    cv::GMat);
 #undef HANDLE_CASE
             default:
                 GAPI_Assert(false && "Unsupported type");
@@ -162,6 +165,7 @@ struct GAPI_EXPORTS_W_SIMPLE GArrayT
             HANDLE_CASE(cv::Rect);
             HANDLE_CASE(cv::Scalar);
             HANDLE_CASE(cv::Mat);
+            HANDLE_CASE(cv::GMat);
 #undef HANDLE_CASE
             default:
                 GAPI_Assert(false && "Unsupported type");
