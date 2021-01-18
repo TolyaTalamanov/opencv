@@ -579,8 +579,7 @@ infer(const std::string& tag, const cv::GArray<cv::Rect>& rois, const GInferInpu
  *     for every region in the source image, extended version.
  *
  * @param tag a network tag
- * @param rois a list of rectangles describing regions of interest
- *   in the source image. Usually an output of object detector or tracker.
+ * @param in a source image containing regions of interest.
  * @param inputs networks's inputs
  * @return a GInferListOutputs
  */
@@ -588,7 +587,7 @@ template<typename T = Generic, typename Input>
 typename std::enable_if<cv::detail::accepted_infer_types<Input>::value, GInferListOutputs>::type
 infer2(const std::string& tag,
        const Input& in,
-       const cv::GInferListInputs& list)
+       const cv::GInferListInputs& inputs)
 {
     std::vector<cv::GArg> args;
     std::vector<std::string> names;
@@ -598,7 +597,7 @@ infer2(const std::string& tag,
     auto k = cv::detail::GOpaqueTraits<Input>::kind;
     kinds.emplace_back(k);
 
-    for (auto&& p : list.getBlobs()) {
+    for (auto&& p : inputs.getBlobs()) {
         names.emplace_back(p.first);
         switch (p.second.index()) {
             case cv::GInferListInputs::StorageT::index_of<cv::GArray<cv::GMat>>():
