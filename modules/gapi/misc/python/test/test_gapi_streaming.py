@@ -19,7 +19,7 @@ class test_gapi_streaming(NewOpenCVTests):
         g_in = cv.GMat()
         g_out = cv.gapi.medianBlur(g_in, 3)
         c = cv.GComputation(g_in, g_out)
-        ccomp = c.compileStreaming(cv.descr_of(cv.gin(in_mat)))
+        ccomp = c.compileStreaming()
         ccomp.setSource(cv.gin(in_mat))
         ccomp.start()
 
@@ -196,7 +196,6 @@ class test_gapi_streaming(NewOpenCVTests):
             proc_num_frames += 1
             if proc_num_frames == max_num_frames:
                 break;
-
 
 if __name__ == '__main__':
     NewOpenCVTests.bootstrap()

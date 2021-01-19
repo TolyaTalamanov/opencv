@@ -16,7 +16,12 @@ namespace cv
    class GAPI_EXPORTS_W_SIMPLE GRunArg { };
    class GAPI_EXPORTS_W_SIMPLE GMetaArg { };
 
-   class GAPI_EXPORTS_W_SIMPLE GArrayP2f { };
+   struct GAPI_EXPORTS_W_SIMPLE GArrayP2f { GAPI_WRAP GArrayP2f(); };
+   struct GAPI_EXPORTS_W_SIMPLE GRects    { GAPI_WRAP GRects();    };
+   struct GAPI_EXPORTS_W_SIMPLE GSize     { GAPI_WRAP GSize();     }
+   struct GAPI_EXPORTS_W_SIMPLE GRect     { GAPI_WRAP GRect();     }
+
+   struct GAPI_EXPORTS_W_SIMPLE ExtractArgsCallback { };
 
    using GProtoInputArgs  = GIOProtoArgs<In_Tag>;
    using GProtoOutputArgs = GIOProtoArgs<Out_Tag>;
@@ -24,6 +29,7 @@ namespace cv
    namespace gapi
    {
        GAPI_EXPORTS_W gapi::GNetPackage networks(const cv::gapi::ie::PyParams& params);
+
        namespace wip
        {
            class GAPI_EXPORTS_W IStreamSource { };

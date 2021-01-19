@@ -334,6 +334,9 @@ private:
     detail::GOpaqueU m_ref;
 };
 
+// NB: Used by python wrapper
+using GSize = GOpaque<cv::Size>;
+using GRect = GOpaque<cv::Rect>;
 /** @} */
 
 } // namespace cv

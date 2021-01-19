@@ -369,6 +369,7 @@ private:
 };
 
 using GArrayP2f = GArray<cv::Point2f>;
+using GRects    = GArray<cv::Rect>;
 
 /** @} */
 

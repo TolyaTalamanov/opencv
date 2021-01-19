@@ -53,6 +53,7 @@ file(GLOB gapi_ext_hdrs
     "${CMAKE_CURRENT_LIST_DIR}/include/opencv2/${name}/streaming/*.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/include/opencv2/${name}/plaidml/*.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/include/opencv2/${name}/util/*.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/opencv2/${name}/python/*.hpp"
     )
 
 set(gapi_srcs
@@ -81,6 +82,7 @@ set(gapi_srcs
     src/api/ginfer.cpp
     src/api/media.cpp
     src/api/rmat.cpp
+    src/api/python_bridge.cpp
 
     # Compiler part
     src/compiler/gmodel.cpp
@@ -158,6 +160,7 @@ set(gapi_srcs
 
     # Python bridge
     src/backends/ie/bindings_ie.cpp
+    src/backends/python/gpythonbackend.cpp
     )
 
 ocv_add_dispatched_file(backends/fluid/gfluidimgproc_func SSE4_1 AVX2)
