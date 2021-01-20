@@ -708,6 +708,18 @@ namespace gapi {
     };
     /** @} */
 
+    class GAPI_EXPORTS GOutputs
+    {
+    public:
+        GOutputs(const std::string& id, cv::GProtoInputArgs &&ins);
+        cv::GMat getGMat();
+    private:
+        struct Priv;
+        std::shared_ptr<Priv> m_priv;
+    };
+
+    GAPI_EXPORTS GOutputs op(const std::string& id, GProtoInputArgs &&ins);
+
 } // namespace gapi
 
 namespace detail

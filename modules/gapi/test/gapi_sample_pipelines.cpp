@@ -429,4 +429,22 @@ TEST(GAPI_Pipeline, ReplaceDefaultByFunctor)
     EXPECT_EQ(0, cv::norm(out_mat, ref_mat));
     EXPECT_TRUE(f.is_called);
 }
+
+TEST(GAPI_Pipeline, UseRuntimeOp)
+{
+    cv::Mat in_mat1 = cv::Mat::eye(5, 5, CV_8UC1);
+    cv::Mat in_mat2 = cv::Mat::eye(5, 5, CV_8UC1);
+    cv::Mat gapi_mat, ocv_mat;
+
+    cv::GMat in1, in2;
+    auto outputs = cv::gapi::op("custom.sum", cv::GIn(in1, in2));
+    auto out = outputs.getGMat();
+
+    cv::GComputation comp(cv::GIn(in1, in2), cv::GOut(out));
+
+    comp.apply(cv::gin(in_mat1, in_mat2), cv::gout(gapi_mat));
+
+    std::cout << gapi_mat << std::endl;
+}
+
 } // namespace opencv_test
