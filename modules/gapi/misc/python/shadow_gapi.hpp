@@ -14,7 +14,7 @@ namespace cv
    class GAPI_EXPORTS_W_SIMPLE GProtoInputArgs { };
    class GAPI_EXPORTS_W_SIMPLE GProtoOutputArgs { };
    class GAPI_EXPORTS_W_SIMPLE GRunArg { };
-   class GAPI_EXPORTS_W_SIMPLE GMetaArg { };
+   class GAPI_EXPORTS_W_SIMPLE GMetaArg { GAPI_WRAP GMetaARg(); };
 
    struct GAPI_EXPORTS_W_SIMPLE GArrayP2f { GAPI_WRAP GArrayP2f(); };
    struct GAPI_EXPORTS_W_SIMPLE GRects    { GAPI_WRAP GRects();    };

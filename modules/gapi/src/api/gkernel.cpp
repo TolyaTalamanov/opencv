@@ -99,48 +99,42 @@ std::vector<cv::gapi::GBackend> cv::gapi::GKernelPackage::backends() const
     return std::vector<cv::gapi::GBackend>(unique_set.begin(), unique_set.end());
 }
 
-cv::gapi::GOutputs cv::gapi::op(const std::string& id, cv::GProtoInputArgs &&ins)
+cv::gapi::GOutputs cv::gapi::op(const std::string& id,
+                                cv::GKernel::M outMeta,
+                                cv::GArgs&& args)
 {
-    return cv::gapi::GOutputs{id, std::move(ins)};
+    cv::gapi::GOutputs outputs{id, std::move(args)};
+    outputs.setMeta(outMeta);
+    return outputs;
 }
 
 class cv::gapi::GOutputs::Priv
 {
 public:
-    Priv(const std::string& id, cv::GProtoInputArgs &&ins);
+    Priv(const std::string& id, cv::GArgs &&ins);
 
     cv::GMat getGMat();
+    void setMeta(cv::GKernel::M outMeta);
 
 private:
     size_t output = 0;
     std::unique_ptr<cv::GCall> m_call;
 };
 
-cv::gapi::GOutputs::Priv::Priv(const std::string& id, cv::GProtoInputArgs &&ins)
+cv::gapi::GOutputs::Priv::Priv(const std::string& id, cv::GArgs &&args)
 {
-    cv::GArgs args;
     cv::GKinds kinds;
+    kinds.reserve(args.size());
+    ade::util::transform(args, std::back_inserter(kinds),
+            [](const cv::GArg& arg){ return arg.opaque_kind; });
 
-    for (auto&& proto : ins.m_args)
-    {
-        switch (proto.index())
-        {
-            case cv::GProtoArg::index_of<cv::GMat>():
-                args.emplace_back(cv::util::get<cv::GMat>(proto));
-                kinds.push_back(cv::detail::OpaqueKind::CV_MAT);
-                break;
-
-            case cv::GProtoArg::index_of<cv::GScalar>():
-                args.emplace_back(cv::util::get<cv::GScalar>(proto));
-                kinds.push_back(cv::detail::OpaqueKind::CV_SCALAR);
-                break;
-            default:
-                cv::util::throw_error(std::logic_error("Unsuported input for cv::gapi::op"));
-        }
-    }
-    cv::GKernel k{id, {}, {}, {}, std::move(kinds), {}};
-    m_call.reset(new cv::GCall{std::move(k)});
+    m_call.reset(new cv::GCall{cv::GKernel{id, {}, {}, {}, std::move(kinds), {}}});
     m_call->setArgs(std::move(args));
+}
+
+void cv::gapi::GOutputs::Priv::setMeta(cv::GKernel::M outMeta)
+{
+    m_call->kernel().outMeta = outMeta;
 }
 
 cv::GMat cv::gapi::GOutputs::Priv::getGMat()
@@ -151,7 +145,8 @@ cv::GMat cv::gapi::GOutputs::Priv::getGMat()
     return m_call->yield(output++);
 }
 
-cv::gapi::GOutputs::GOutputs(const std::string& id, cv::GProtoInputArgs &&ins) :
+cv::gapi::GOutputs::GOutputs(const std::string& id,
+                             cv::GArgs &&ins) :
     m_priv(new cv::gapi::GOutputs::Priv(id, std::move(ins)))
 {
 }
@@ -159,4 +154,9 @@ cv::gapi::GOutputs::GOutputs(const std::string& id, cv::GProtoInputArgs &&ins) :
 cv::GMat cv::gapi::GOutputs::getGMat()
 {
     return m_priv->getGMat();
+}
+
+void cv::gapi::GOutputs::setMeta(cv::GKernel::M outMeta)
+{
+    m_priv->setMeta(outMeta);
 }
