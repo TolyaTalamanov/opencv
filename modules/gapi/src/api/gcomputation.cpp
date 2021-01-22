@@ -216,7 +216,7 @@ cv::GRunArgs cv::GComputation::apply(const ExtractArgsCallback& callback, GCompi
                 cv::detail::VectorRef ref;
                 util::get<cv::detail::ConstructVec>(info.ctor)(ref);
                 run_args.emplace_back(ref);
-                outs.emplace_back(cv::util::get<cv::detail::VectorRef>(run_args.back()));
+                outs.emplace_back(ref);
                 break;
             }
             case cv::GShape::GOPAQUE:

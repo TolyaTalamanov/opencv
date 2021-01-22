@@ -38,10 +38,6 @@ if(MSVC)
   endif()
 endif()
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")  # don't add Clang here: issue should be investigated and fixed (workaround for Apple only)
-  ocv_warnings_disable(CMAKE_CXX_FLAGS -Wrange-loop-analysis)  # https://github.com/opencv/opencv/issues/18928
-endif()
-
 file(GLOB gapi_ext_hdrs
     "${CMAKE_CURRENT_LIST_DIR}/include/opencv2/*.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/include/opencv2/${name}/*.hpp"
@@ -57,6 +53,7 @@ file(GLOB gapi_ext_hdrs
     "${CMAKE_CURRENT_LIST_DIR}/include/opencv2/${name}/streaming/*.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/include/opencv2/${name}/plaidml/*.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/include/opencv2/${name}/util/*.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/opencv2/${name}/python/*.hpp"
     )
 
 set(gapi_srcs
@@ -163,6 +160,7 @@ set(gapi_srcs
 
     # Python bridge
     src/backends/ie/bindings_ie.cpp
+    src/backends/python/gpythonbackend.cpp
     )
 
 ocv_add_dispatched_file(backends/fluid/gfluidimgproc_func SSE4_1 AVX2)

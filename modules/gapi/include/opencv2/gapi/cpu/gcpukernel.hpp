@@ -488,6 +488,7 @@ public:
     struct Name: public cv::GCPUStKernelImpl<Name, API, State> \
 
 
+using Impl = std::function<void(GCPUContext &)>;
 class gapi::cpu::GOCVFunctor : public gapi::GFunctor
 {
 public:
@@ -526,6 +527,7 @@ gapi::cpu::GOCVFunctor gapi::cpu::ocv_kernel(const Callable& c)
                       , std::bind(&P::callFunctor, std::placeholders::_1, c)
                       };
 }
+
 //! @endcond
 
 } // namespace cv

@@ -708,6 +708,27 @@ namespace gapi {
     };
     /** @} */
 
+    class GAPI_EXPORTS_W_SIMPLE GOutputs
+    {
+    public:
+        GOutputs() = default;
+        GOutputs(const std::string& id, cv::GArgs &&ins);
+        GAPI_WRAP cv::GMat getGMat();
+        void setMeta(cv::GKernel::M outMeta);
+    private:
+        struct Priv;
+        std::shared_ptr<Priv> m_priv;
+    };
+
+    GAPI_EXPORTS GOutputs op(const std::string& id, cv::GKernel::M outMeta, cv::GArgs&& args);
+
+    template <typename... T>
+    GAPI_EXPORTS GOutputs op(const std::string& id, cv::GKernel::M outMeta, T&&... args)
+    {
+        return op(id, outMeta, cv::GArgs{cv::GArg(std::forward<T>(args))... });
+    }
+    
+
 } // namespace gapi
 
 namespace detail

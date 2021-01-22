@@ -98,3 +98,65 @@ std::vector<cv::gapi::GBackend> cv::gapi::GKernelPackage::backends() const
 
     return std::vector<cv::gapi::GBackend>(unique_set.begin(), unique_set.end());
 }
+
+cv::gapi::GOutputs cv::gapi::op(const std::string& id,
+                                cv::GKernel::M outMeta,
+                                cv::GArgs&& args)
+{
+    cv::gapi::GOutputs outputs{id, std::move(args)};
+    outputs.setMeta(outMeta);
+    return outputs;
+}
+
+class cv::gapi::GOutputs::Priv
+{
+public:
+    Priv(const std::string& id, cv::GArgs &&ins);
+
+    cv::GMat getGMat();
+    void setMeta(cv::GKernel::M outMeta);
+
+private:
+    size_t output = 0;
+    std::unique_ptr<cv::GCall> m_call;
+};
+
+cv::gapi::GOutputs::Priv::Priv(const std::string& id, cv::GArgs &&args)
+{
+    cv::GKinds kinds;
+    kinds.reserve(args.size());
+    ade::util::transform(args, std::back_inserter(kinds),
+            [](const cv::GArg& arg){ return arg.opaque_kind; });
+
+    m_call.reset(new cv::GCall{cv::GKernel{id, {}, {}, {}, std::move(kinds), {}}});
+    m_call->setArgs(std::move(args));
+}
+
+void cv::gapi::GOutputs::Priv::setMeta(cv::GKernel::M outMeta)
+{
+    m_call->kernel().outMeta = outMeta;
+}
+
+cv::GMat cv::gapi::GOutputs::Priv::getGMat()
+{
+    m_call->kernel().outShapes.push_back(cv::GShape::GMAT);
+    // ...so _empty_ constructor is passed here.
+    m_call->kernel().outCtors.emplace_back(cv::util::monostate{});
+    return m_call->yield(output++);
+}
+
+cv::gapi::GOutputs::GOutputs(const std::string& id,
+                             cv::GArgs &&ins) :
+    m_priv(new cv::gapi::GOutputs::Priv(id, std::move(ins)))
+{
+}
+
+cv::GMat cv::gapi::GOutputs::getGMat()
+{
+    return m_priv->getGMat();
+}
+
+void cv::gapi::GOutputs::setMeta(cv::GKernel::M outMeta)
+{
+    m_priv->setMeta(outMeta);
+}

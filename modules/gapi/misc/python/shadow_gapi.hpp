@@ -14,7 +14,7 @@ namespace cv
    class GAPI_EXPORTS_W_SIMPLE GProtoInputArgs { };
    class GAPI_EXPORTS_W_SIMPLE GProtoOutputArgs { };
    class GAPI_EXPORTS_W_SIMPLE GRunArg { };
-   class GAPI_EXPORTS_W_SIMPLE GMetaArg { };
+   class GAPI_EXPORTS_W_SIMPLE GMetaArg { GAPI_WRAP GMetaARg(); };
 
    struct GAPI_EXPORTS_W_SIMPLE ExtractArgsCallback { };
 
@@ -24,6 +24,10 @@ namespace cv
    namespace gapi
    {
        GAPI_EXPORTS_W gapi::GNetPackage networks(const cv::gapi::ie::PyParams& params);
+       GAPI_EXPORTS_W gapi::GNetPackage networks(const cv::gapi::ie::PyParams&,
+                                                 const cv::gapi::ie::PyParams&,
+                                                 const cv::gapi::ie::PyParams&,
+                                                 const cv::gapi::ie::PyParams&);
 
        namespace wip
        {

@@ -73,7 +73,7 @@ class RMat;
  * \addtogroup gapi_meta_args
  * @{
  */
-struct GAPI_EXPORTS GMatDesc
+struct GAPI_EXPORTS_W_SIMPLE GMatDesc
 {
     // FIXME: Default initializers in C++14
     int depth;
@@ -82,7 +82,7 @@ struct GAPI_EXPORTS GMatDesc
     bool planar;
     std::vector<int> dims; // FIXME: Maybe it's real questionable to have it here
 
-    GMatDesc(int d, int c, cv::Size s, bool p = false)
+    GAPI_WRAP GMatDesc(int d, int c, cv::Size s, bool p = false)
         : depth(d), chan(c), size(s), planar(p) {}
 
     GMatDesc(int d, const std::vector<int> &dd)

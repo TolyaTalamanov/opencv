@@ -49,7 +49,6 @@ class test_gapi_infer(NewOpenCVTests):
         comp = cv.GComputation(cv.GIn(g_in), cv.GOut(age_g, gender_g))
         pp = cv.gapi.ie.params("net", model_path, weights_path, device_id)
 
-        nets = cv.gapi.networks(pp)
         gapi_age, gapi_gender = comp.apply(cv.gin(img), args=cv.compile_args(cv.gapi.networks(pp)))
 
         # Check
@@ -87,7 +86,6 @@ class test_gapi_infer(NewOpenCVTests):
                     width  = int(xmax * w - x)
                     height = int(ymax * h - y)
                     bboxes.append((x, y, width, height))
-
             return bboxes
 
         net.setInput(blob)
@@ -107,10 +105,7 @@ class test_gapi_infer(NewOpenCVTests):
         comp = cv.GComputation(cv.GIn(g_in), cv.GOut(bboxes))
         pp = cv.gapi.ie.params("net", model_path, weights_path, device_id)
 
-        nets = cv.gapi.networks(pp)
-        args = cv.compile_args(nets)
-
-        gapi_boxes = comp.apply(cv.gin(img.astype(np.float32)),
+        gapi_boxes = comp.apply(cv.gin(img),
                                 args=cv.compile_args(cv.gapi.networks(pp)))
 
         # Comparison

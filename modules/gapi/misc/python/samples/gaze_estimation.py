@@ -54,25 +54,28 @@ if __name__ == '__main__':
     # Detect poses
     head_inputs = cv.GInferInputs()
     head_inputs.setInput('data', g_in)
-    face_outputs = cv.gapi.infer('head-pose', head_inputs)
+    face_outputs = cv.gapi.infer('head-pose', faces_rc, head_inputs)
     angles_y = face_outputs.at('angle_y_fc')
     angles_p = face_outputs.at('angle_p_fc')
     angles_r = face_outputs.at('angle_r_fc')
 
-    # Detect landmarks
-    lm_inputs = cv.GInferInputs()
-    lm_inputs.setInput('data', g_in)
-    lm_outputs = cv.gapi.infer('facial-landmarks', lm_inputs)
-    landmarks = lm_outputs.at('align_fc3')
+    # # Detect landmarks
+    # lm_inputs = cv.GInferInputs()
+    # lm_inputs.setInput('data', g_in)
+    # lm_outputs = cv.gapi.infer('facial-landmarks', lm_inputs)
+    # landmarks = lm_outputs.at('align_fc3')
 
-    comp = cv.GComputation(cv.GIn(g_in), cv.GOut(landmarks))
-    face_net      = cv.gapi.ie.params('face-detection', arguments.facem, weight_path(arguments.facem), arguments.faced)
-    head_pose_net = cv.gapi.ie.params('head_pose', arguments.headm, weight_path(arguments.headm), arguments.headd)
-    landmarks_net=  cv.gapi.ie.params('facial-landmarks', arguments.landm, weight_path(arguments.landm), arguments.landd)
+    # comp = cv.GComputation(cv.GIn(g_in), cv.GOut(landmarks))
+    comp = cv.GComputation(cv.GIn(g_in), cv.GOut(angles_r))
 
-    networks = cv.gapi.networks(face_net)
-    bboxes = comp.apply(cv.gin(img), args=cv.compile_args(networks))
-    print(bboxes)
+    face_net      = cv.gapi.ie.params('face-detection'  , arguments.facem, weight_path(arguments.facem), arguments.faced)
+    head_pose_net = cv.gapi.ie.params('head-pose'       , arguments.headm, weight_path(arguments.headm), arguments.headd)
+    landmarks_net = cv.gapi.ie.params('facial-landmarks', arguments.landm, weight_path(arguments.landm), arguments.landd)
+    gaze_net      = cv.gapi.ie.params('gaze-estimation' , arguments.landm, weight_path(arguments.landm), arguments.landd)
+
+    out = comp.apply(cv.gin(img), args=cv.compile_args(
+        cv.gapi.networks(face_net, head_pose_net, landmarks_net, gaze_net)))
+    print(out)
 
 
     # sz = cv.GOpaqueT(cv.gapi.CV_SIZE)
