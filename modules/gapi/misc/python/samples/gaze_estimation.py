@@ -59,6 +59,11 @@ if __name__ == '__main__':
     angles_p = face_outputs.at('angle_p_fc')
     angles_r = face_outputs.at('angle_r_fc')
 
+    # cv::GArray<cv::GMat> heads_pos = custom::ProcessPoses::on(angles_y, angles_p, angles_r);
+    outputs = cv.gapi_op('process_poses', process_poses_meta, g_in1, g_in2, 2)
+    heads_pos = outputs.getGArray(cv.gapi.CV_GMAT)
+    # comp = cv.GComputation(cv.GIn(g_in1, g_in2), cv.GOut(g_out))
+
     # # Detect landmarks
     # lm_inputs = cv.GInferInputs()
     # lm_inputs.setInput('data', g_in)
@@ -71,7 +76,7 @@ if __name__ == '__main__':
     face_net      = cv.gapi.ie.params('face-detection'  , arguments.facem, weight_path(arguments.facem), arguments.faced)
     head_pose_net = cv.gapi.ie.params('head-pose'       , arguments.headm, weight_path(arguments.headm), arguments.headd)
     landmarks_net = cv.gapi.ie.params('facial-landmarks', arguments.landm, weight_path(arguments.landm), arguments.landd)
-    gaze_net      = cv.gapi.ie.params('gaze-estimation' , arguments.landm, weight_path(arguments.landm), arguments.landd)
+    gaze_net      = cv.gapi.ie.params('gaze-estimation' , arguments.gazem, weight_path(arguments.gazem), arguments.gazed)
 
     out = comp.apply(cv.gin(img), args=cv.compile_args(
         cv.gapi.networks(face_net, head_pose_net, landmarks_net, gaze_net)))

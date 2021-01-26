@@ -114,6 +114,7 @@ public:
     Priv(const std::string& id, cv::GArgs &&ins);
 
     cv::GMat getGMat();
+    cv::GArrayT getGArray(cv::gapi::ArgType);
     void setMeta(cv::GKernel::M outMeta);
 
 private:
@@ -145,6 +146,21 @@ cv::GMat cv::gapi::GOutputs::Priv::getGMat()
     return m_call->yield(output++);
 }
 
+cv::GArrayT cv::gapi::GOutputs::Priv::getGArray(cv::gapi::ArgType type)
+{
+    m_call->kernel().outShapes.push_back(cv::GShape::GARRAY);
+    // ...so _empty_ constructor is passed here.
+    switch (type)
+    {
+        case cv::gapi::ArgType::CV_GMAT:
+            m_call->kernel().outCtors.emplace_back(cv::detail::GObtainCtor<cv::GArray<cv::GMat>>::get());
+            return cv::GArrayT(m_call->yieldArray<cv::GMat>(output++));
+        default:
+            util::throw_error(std::logic_error("Unsupported output GArray kind"));
+    }
+    GAPI_Assert(false && "Unreachable code");
+}
+
 cv::gapi::GOutputs::GOutputs(const std::string& id,
                              cv::GArgs &&ins) :
     m_priv(new cv::gapi::GOutputs::Priv(id, std::move(ins)))
@@ -154,6 +170,11 @@ cv::gapi::GOutputs::GOutputs(const std::string& id,
 cv::GMat cv::gapi::GOutputs::getGMat()
 {
     return m_priv->getGMat();
+}
+
+cv::GArrayT cv::gapi::GOutputs::getGArray(cv::gapi::ArgType type)
+{
+    return m_priv->getGArray(type);
 }
 
 void cv::gapi::GOutputs::setMeta(cv::GKernel::M outMeta)

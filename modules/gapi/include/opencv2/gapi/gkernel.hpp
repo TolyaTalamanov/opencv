@@ -24,6 +24,8 @@
 #include <opencv2/gapi/util/compiler_hints.hpp> //suppress_unused_warning
 #include <opencv2/gapi/gtransform.hpp>
 
+#include <opencv2/gapi/python_bridge.hpp>
+
 namespace cv {
 
 struct GTypeInfo
@@ -714,6 +716,7 @@ namespace gapi {
         GOutputs() = default;
         GOutputs(const std::string& id, cv::GArgs &&ins);
         GAPI_WRAP cv::GMat getGMat();
+        GAPI_WRAP cv::GArrayT getGArray(cv::gapi::ArgType type);
         void setMeta(cv::GKernel::M outMeta);
     private:
         struct Priv;

@@ -172,6 +172,8 @@ public:
     template<typename T>
     GArrayT(cv::GArray<T> arg) : m_arg(arg) { };
 
+    GArrayT() = default;
+
     GAPI_WRAP GArrayT(gapi::ArgType type) : m_type(type)
     {
 

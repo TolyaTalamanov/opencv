@@ -32,6 +32,18 @@ def custom_add_meta(img_desc1, img_desc2, dtype):
     return img_desc1
 
 
+def custom_flatten_meta(img_desc):
+    print('custom flatten meta python')
+    return cv.empty_array_desc()
+
+
+def custom_flatten(img):
+    l = []
+    l.append(np.arange(9).reshape(3,3))
+    print('custom = ', l)
+    return l
+
+
 class gapi_sample_pipelines(NewOpenCVTests):
 
     # NB: This test check multiple outputs for operation
@@ -127,26 +139,46 @@ class gapi_sample_pipelines(NewOpenCVTests):
         # self.assertEqual(0.0, cv.norm(expected, actual, cv.NORM_INF))
 
 
+    # def test_custom_op(self):
+        # sz = (3, 3)
+        # in_mat1 = np.full(sz, 45, dtype=np.uint8)
+        # in_mat2 = np.full(sz, 50 , dtype=np.uint8)
+
+        # # OpenCV
+        # expected = cv.add(in_mat1, in_mat2)
+
+        # # G-API
+        # g_in1 = cv.GMat()
+        # g_in2 = cv.GMat()
+
+        # outputs = cv.gapi_op('custom.sum', custom_add_meta, g_in1, g_in2, 2)
+        # g_out = outputs.getGMat()
+        # comp = cv.GComputation(cv.GIn(g_in1, g_in2), cv.GOut(g_out))
+
+        # pkg = cv.kernels((custom_add, 'custom.sum'))
+        # actual = comp.apply(cv.gin(in_mat1, in_mat2), args=cv.compile_args(pkg))
+
+        # self.assertEqual(0.0, cv.norm(expected, actual, cv.NORM_INF))
+
+
     def test_custom_op(self):
         sz = (3, 3)
-        in_mat1 = np.full(sz, 45, dtype=np.uint8)
-        in_mat2 = np.full(sz, 50 , dtype=np.uint8)
-
-        # OpenCV
-        expected = cv.add(in_mat1, in_mat2)
+        in_mat = np.full(sz, 45, dtype=np.uint8)
 
         # G-API
-        g_in1 = cv.GMat()
-        g_in2 = cv.GMat()
+        g_in = cv.GMat()
 
-        outputs = cv.gapi_op('custom.sum', custom_add_meta, g_in1, g_in2, 2)
-        g_out = outputs.getGMat()
-        comp = cv.GComputation(cv.GIn(g_in1, g_in2), cv.GOut(g_out))
+        outputs = cv.gapi_op('custom.flatten', custom_flatten_meta, g_in)
+        g_out = outputs.getGArray(cv.gapi.CV_GMAT)
 
-        pkg = cv.kernels((custom_add, 'custom.sum'))
-        actual = comp.apply(cv.gin(in_mat1, in_mat2), args=cv.compile_args(pkg))
+        comp = cv.GComputation(cv.GIn(g_in), cv.GOut(g_out))
 
-        self.assertEqual(0.0, cv.norm(expected, actual, cv.NORM_INF))
+        pkg = cv.kernels((custom_flatten, 'custom.flatten'))
+        actual = comp.apply(cv.gin(in_mat), args=cv.compile_args(pkg))
+
+        print('actual = ', actual)
+
+        # self.assertEqual(0.0, cv.norm(expected, actual, cv.NORM_INF))
 
 
 

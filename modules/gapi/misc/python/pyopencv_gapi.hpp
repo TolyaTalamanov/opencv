@@ -435,6 +435,7 @@ GMetaArgs empty_meta(const cv::GMetaArgs &meta, const cv::GArgs &args) {
 }
 
 GMetaArgs python_meta(PyObject* outMeta, const cv::GMetaArgs &meta, const cv::GArgs &gargs) {
+    std::cout << "PYTHON META" << std::endl;
     PyGILState_STATE gstate;
     gstate = PyGILState_Ensure();
 
@@ -445,10 +446,17 @@ GMetaArgs python_meta(PyObject* outMeta, const cv::GMetaArgs &meta, const cv::GA
         switch (m.index())
         {
             case cv::GMetaArg::index_of<cv::GMatDesc>():
+                std::cout << "GMAT" << std::endl;
                 PyTuple_SetItem(args, idx, pyopencv_from(cv::util::get<cv::GMatDesc>(m)));
                 break;
 
+            case cv::GMetaArg::index_of<cv::GArrayDesc>():
+                std::cout << "GARRAY" << std::endl;
+                PyTuple_SetItem(args, idx, pyopencv_from(cv::util::get<cv::GArrayDesc>(m)));
+                break;
+
             case cv::GMetaArg::index_of<cv::util::monostate>():
+                std::cout << "mono state" << std::endl;
                 PyTuple_SetItem(args, idx, gargs[idx].get<PyObject*>());
                 break;
 
@@ -471,6 +479,11 @@ GMetaArgs python_meta(PyObject* outMeta, const cv::GMetaArgs &meta, const cv::GA
                     reinterpret_cast<PyTypeObject*>(pyopencv_GMatDesc_TypePtr)))
         {
             out_metas.push_back(cv::GMetaArg{reinterpret_cast<pyopencv_GMatDesc_t*>(result)->v});
+        }
+        else if (PyObject_TypeCheck(result,
+                    reinterpret_cast<PyTypeObject*>(pyopencv_GArrayDesc_TypePtr)))
+        {
+            out_metas.push_back(cv::GMetaArg{reinterpret_cast<pyopencv_GArrayDesc_t*>(result)->v});
         }
     }
     else

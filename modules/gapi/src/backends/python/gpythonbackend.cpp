@@ -94,21 +94,28 @@ static cv::GArg packArg(cv::gimpl::Mag& m_res, const cv::GArg &arg)
     }
 }
 
-static void writeBack(const cv::GRunArg& arg, cv::GRunArgP& out)
+static void writeBack(cv::GRunArg& arg, cv::GRunArgP& out)
 {
     switch (arg.index())
     {
         case cv::GRunArg::index_of<cv::Mat>():
-            {
-                auto& rmat = *cv::util::get<cv::RMat*>(out);
-                rmat = cv::make_rmat<cv::gimpl::RMatAdapter>(cv::util::get<cv::Mat>(arg));
-                break;
-            }
+        {
+            auto& rmat = *cv::util::get<cv::RMat*>(out);
+            rmat = cv::make_rmat<cv::gimpl::RMatAdapter>(cv::util::get<cv::Mat>(arg));
+            break;
+        }
         case cv::GRunArg::index_of<cv::Scalar>():
-            {
-                *cv::util::get<cv::Scalar*>(out) = cv::util::get<cv::Scalar>(arg);
-                break;
-            }
+        {
+            *cv::util::get<cv::Scalar*>(out) = cv::util::get<cv::Scalar>(arg);
+            break;
+        }
+        case cv::GRunArg::index_of<cv::detail::VectorRef>():
+        {
+
+            auto& ref = cv::util::get<cv::detail::VectorRef>(arg);
+            cv::util::get<cv::detail::VectorRef>(out).mov(ref);
+            break;
+        }
         default:
             GAPI_Assert(false && "Unsupported output type");
     }
