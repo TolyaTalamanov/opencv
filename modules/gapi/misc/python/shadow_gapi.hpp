@@ -16,8 +16,6 @@ namespace cv
    class GAPI_EXPORTS_W_SIMPLE GRunArg { };
    class GAPI_EXPORTS_W_SIMPLE GMetaArg { };
 
-   struct GAPI_EXPORTS_W_SIMPLE ExtractArgsCallback { };
-
    using GProtoInputArgs  = GIOProtoArgs<In_Tag>;
    using GProtoOutputArgs = GIOProtoArgs<Out_Tag>;
 
@@ -50,6 +48,12 @@ namespace cv
        GAPI_WRAP GInferListOutputs();
        GAPI_WRAP cv::GArray<cv::GMat> at(const std::string& name);
    };
+
+   namespace detail
+   {
+       struct GAPI_EXPORTS_W_SIMPLE ExtractArgsCallback { };
+       struct GAPI_EXPORTS_W_SIMPLE ExtractMetaCallback { };
+   } // namespace detail
 
    namespace gapi
    {

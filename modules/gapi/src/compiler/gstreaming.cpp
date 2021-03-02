@@ -96,7 +96,8 @@ cv::GStreamingCompiled::GStreamingCompiled()
 {
 }
 
-void cv::GStreamingCompiled::setSource(const cv::ExtractArgsCallback& callback)
+// NB: This overload is called from python code
+void cv::GStreamingCompiled::setSource(const cv::detail::ExtractArgsCallback& callback)
 {
     setSource(callback(m_priv->inInfo()));
 }
@@ -124,46 +125,13 @@ bool cv::GStreamingCompiled::pull(cv::GRunArgsP &&outs)
 
 std::tuple<bool, cv::GRunArgs> cv::GStreamingCompiled::pull()
 {
-    // FIXME: Why it is not @ priv??
     GRunArgs run_args;
     GRunArgsP outs;
     const auto& out_info = m_priv->outInfo();
     run_args.reserve(out_info.size());
     outs.reserve(out_info.size());
 
-    for (auto&& info : out_info)
-    {
-        switch (info.shape)
-        {
-            case cv::GShape::GMAT:
-            {
-                run_args.emplace_back(cv::Mat{});
-                outs.emplace_back(&cv::util::get<cv::Mat>(run_args.back()));
-                break;
-            }
-            case cv::GShape::GSCALAR:
-            {
-                run_args.emplace_back(cv::Scalar{});
-                outs.emplace_back(&cv::util::get<cv::Scalar>(run_args.back()));
-                break;
-            }
-            case cv::GShape::GARRAY:
-            {
-                switch (info.kind)
-                {
-                    case cv::detail::OpaqueKind::CV_POINT2F:
-                        run_args.emplace_back(cv::detail::VectorRef{std::vector<cv::Point2f>{}});
-                        break;
-                    default:
-                        util::throw_error(std::logic_error("Unsupported kind for GArray"));
-                }
-                outs.emplace_back(cv::util::get<cv::detail::VectorRef>(run_args.back()));
-                break;
-            }
-            default:
-                util::throw_error(std::logic_error("Only cv::GMat and cv::GScalar are supported for python output"));
-        }
-    }
+    cv::detail::constructGraphOutputs(m_priv->outInfo(), run_args, outs);
 
     bool is_over = m_priv->pull(std::move(outs));
     return std::make_tuple(is_over, run_args);
