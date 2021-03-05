@@ -56,6 +56,7 @@ public:
     ade::NodeHandle m_op;
 
     cv::GTypesInfo m_out_info;
+    cv::GTypesInfo m_in_info;
     cv::gimpl::Mag m_res;
 };
 
@@ -94,21 +95,33 @@ static cv::GArg packArg(cv::gimpl::Mag& m_res, const cv::GArg &arg)
     }
 }
 
-static void writeBack(const cv::GRunArg& arg, cv::GRunArgP& out)
+static void writeBack(cv::GRunArg& arg, cv::GRunArgP& out)
 {
     switch (arg.index())
     {
         case cv::GRunArg::index_of<cv::Mat>():
-            {
-                auto& rmat = *cv::util::get<cv::RMat*>(out);
-                rmat = cv::make_rmat<cv::gimpl::RMatAdapter>(cv::util::get<cv::Mat>(arg));
-                break;
-            }
+        {
+            auto& rmat = *cv::util::get<cv::RMat*>(out);
+            rmat = cv::make_rmat<cv::gimpl::RMatAdapter>(cv::util::get<cv::Mat>(arg));
+            break;
+        }
         case cv::GRunArg::index_of<cv::Scalar>():
-            {
-                *cv::util::get<cv::Scalar*>(out) = cv::util::get<cv::Scalar>(arg);
-                break;
-            }
+        {
+            *cv::util::get<cv::Scalar*>(out) = cv::util::get<cv::Scalar>(arg);
+            break;
+        }
+        case cv::GRunArg::index_of<cv::detail::OpaqueRef>():
+        {
+            auto& oref = cv::util::get<cv::detail::OpaqueRef>(arg);
+            cv::util::get<cv::detail::OpaqueRef>(out).mov(oref);
+            break;
+        }
+        case cv::GRunArg::index_of<cv::detail::VectorRef>():
+        {
+            auto& vref = cv::util::get<cv::detail::VectorRef>(arg);
+            cv::util::get<cv::detail::VectorRef>(out).mov(vref);
+            break;
+        }
         default:
             GAPI_Assert(false && "Unsupported output type");
     }
@@ -127,7 +140,7 @@ void GPythonExecutable::run(std::vector<InObj>  &&input_objs,
                          std::bind(&packArg, std::ref(m_res), _1));
 
 
-    auto outs = m_kernel(inputs, m_out_info);
+    auto outs = m_kernel(inputs, m_in_info, m_out_info);
 
     for (auto&& it : ade::util::zip(outs, output_objs))
     {
@@ -198,6 +211,13 @@ GPythonExecutable::GPythonExecutable(const ade::Graph& g,
     {
         const auto& out_data = m_gm.metadata(e->dstNode()).get<cv::gimpl::Data>();
         m_out_info.push_back(cv::GTypeInfo{out_data.shape, out_data.kind, out_data.ctor});
+    }
+
+    m_in_info.reserve(m_op->inEdges().size());
+    for (const auto &e : m_op->inEdges())
+    {
+        const auto& in_data = m_gm.metadata(e->srcNode()).get<cv::gimpl::Data>();
+        m_in_info.push_back(cv::GTypeInfo{in_data.shape, in_data.kind, in_data.ctor});
     }
 }
 
