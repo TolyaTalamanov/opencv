@@ -17,17 +17,21 @@ namespace python {
 
 GAPI_EXPORTS cv::gapi::GBackend backend();
 
-using Impl = std::function<cv::GRunArgs(const cv::GArgs&, const cv::GTypesInfo&)>;
+using Impl = std::function<cv::GRunArgs(const cv::GArgs&,
+                                        const cv::GTypesInfo&,
+                                        const cv::GTypesInfo&)>;
 
 class GAPI_EXPORTS GPythonKernel
 {
 public:
     GPythonKernel() = default;
-    GPythonKernel(Impl run) : m_run(run) { };
+    GPythonKernel(Impl run) : m_run(run) { }
 
-    cv::GRunArgs operator()(const cv::GArgs& ins, const cv::GTypesInfo& out_info)
+    cv::GRunArgs operator()(const cv::GArgs& ins,
+                            const cv::GTypesInfo& in_info,
+                            const cv::GTypesInfo& out_info)
     {
-        return m_run(ins, out_info);
+        return m_run(ins, in_info, out_info);
     }
 
 private:
@@ -46,7 +50,7 @@ public:
     {
     }
 
-    GKernelImpl    impl()    const override { return impl_;    }
+    GKernelImpl    impl()    const override { return impl_;                       }
     gapi::GBackend backend() const override { return cv::gapi::python::backend(); }
 
 private:
