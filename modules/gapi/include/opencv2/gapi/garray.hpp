@@ -43,7 +43,7 @@ struct GAPI_EXPORTS_W_SIMPLE GArrayDesc
 };
 template<typename U> GArrayDesc descr_of(const std::vector<U> &) { return {};}
 
-GAPI_EXPORTS_W static inline GArrayDesc empty_array_desc() {return {}; }
+GAPI_EXPORTS_W inline GArrayDesc empty_array_desc() {return {}; }
 /** @} */
 
 std::ostream& operator<<(std::ostream& os, const cv::GArrayDesc &desc);

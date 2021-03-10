@@ -450,36 +450,40 @@ static cv::GRunArgs run_py_kernel(PyObject* kernel,
     cv::GRunArgs outs;
     try
     {
-        // FIXME: ins - is a vector of cv::GArg which contains not only operation inputs, but
-        // parameters. In case there is a `VectorRef` or `OpaqueRef` it's impossible to know it
-        // based on information stored in cv::GArg, for that case check our GInputInfo.
-        int in_idx = 0;
+        // NB: First of all let's unpack all types associated with G-types (they alway follow first)
+        // Then let's unpack all operation arguments based on cv::GArg opaque_kind, in case it is
+        // CV_UNKNOWN mean that is coming from python object.
         PyObject* args = PyTuple_New(ins.size());
-        for (size_t i = 0; i < ins.size(); ++i)
+        size_t in_idx = 0;
+        for (auto&& info : in_info)
         {
-            if (ins[i].opaque_kind != cv::detail::OpaqueKind::CV_UNKNOWN)
+            switch (info.shape)
             {
-                PyTuple_SetItem(args, i, extract_opaque_value(ins[i]));
-                continue;
-            }
-
-            switch (in_info[in_idx].shape)
-            {
+                case cv::GShape::GMAT:
+                    PyTuple_SetItem(args, in_idx, pyopencv_from(ins[in_idx].get<cv::Mat>()));
+                    break;
+                case cv::GShape::GSCALAR:
+                    PyTuple_SetItem(args, in_idx, pyopencv_from(ins[in_idx].get<cv::Scalar>()));
+                    break;
                 case cv::GShape::GOPAQUE:
-                    PyTuple_SetItem(args, i, pyopencv_from(ins[i].get<cv::detail::OpaqueRef>()));
+                    PyTuple_SetItem(args, in_idx, pyopencv_from(ins[in_idx].get<cv::detail::OpaqueRef>()));
                     break;
                 case cv::GShape::GARRAY:
-                    PyTuple_SetItem(args, i, pyopencv_from(ins[i].get<cv::detail::VectorRef>()));
+                    PyTuple_SetItem(args, in_idx, pyopencv_from(ins[in_idx].get<cv::detail::VectorRef>()));
                     break;
-                // NB: These shapes are handled on previous step,
-                // because opaque_kind != CV_UNKNOWN for them.
-                case cv::GShape::GMAT:
                 case cv::GShape::GFRAME:
-                case cv::GShape::GSCALAR:
                     util::throw_error(std::logic_error("Unsupported input shape for custom kernel"));
             }
             ++in_idx;
         }
+
+        for (size_t i = in_idx; i < ins.size(); ++i)
+        {
+            PyTuple_SetItem(args, i,
+                    ins[i].opaque_kind != cv::detail::OpaqueKind::CV_UNKNOWN ? extract_opaque_value(ins[i])
+                                                                             : ins[i].get<PyObject*>());
+        }
+
 
         PyObject* result = PyObject_CallObject(kernel, args);
 
@@ -500,61 +504,95 @@ static GMetaArgs empty_meta(const cv::GMetaArgs &, const cv::GArgs &) {
     return {};
 }
 
-GMetaArgs python_meta(PyObject* outMeta, const cv::GMetaArgs &meta, const cv::GArgs &gargs) {
-    std::cout << "PYTHON META" << std::endl;
-    PyGILState_STATE gstate;
-    gstate = PyGILState_Ensure();
-
-    PyObject* args = PyTuple_New(meta.size());
-    size_t idx = 0;
-    for (auto&& m : meta)
+static GMetaArg get_meta_arg(PyObject* obj)
+{
+    if (PyObject_TypeCheck(obj,
+                reinterpret_cast<PyTypeObject*>(pyopencv_GMatDesc_TypePtr)))
     {
-        switch (m.index())
-        {
-            case cv::GMetaArg::index_of<cv::GMatDesc>():
-                std::cout << "GMAT" << std::endl;
-                PyTuple_SetItem(args, idx, pyopencv_from(cv::util::get<cv::GMatDesc>(m)));
-                break;
-
-            case cv::GMetaArg::index_of<cv::GArrayDesc>():
-                std::cout << "GARRAY" << std::endl;
-                PyTuple_SetItem(args, idx, pyopencv_from(cv::util::get<cv::GArrayDesc>(m)));
-                break;
-
-            case cv::GMetaArg::index_of<cv::util::monostate>():
-                std::cout << "mono state" << std::endl;
-                PyTuple_SetItem(args, idx, gargs[idx].get<PyObject*>());
-                break;
-
-            default:
-                util::throw_error(std::logic_error("Unsupported desc"));
-        }
-        ++idx;
+        return cv::GMetaArg{reinterpret_cast<pyopencv_GMatDesc_t*>(obj)->v};
     }
-
-    PyObject* result = PyObject_CallObject(outMeta, args);
-    bool is_tuple = PyTuple_Check(result);
-
-    size_t size = is_tuple ? PyTuple_Size(result) : 1u;
-
-    cv::GMetaArgs out_metas;
-    out_metas.reserve(size);
-    if (!is_tuple)
+    else if (PyObject_TypeCheck(obj,
+                reinterpret_cast<PyTypeObject*>(pyopencv_GScalarDesc_TypePtr)))
     {
-        if (PyObject_TypeCheck(result,
-                    reinterpret_cast<PyTypeObject*>(pyopencv_GMatDesc_TypePtr)))
-        {
-            out_metas.push_back(cv::GMetaArg{reinterpret_cast<pyopencv_GMatDesc_t*>(result)->v});
-        }
-        else if (PyObject_TypeCheck(result,
-                    reinterpret_cast<PyTypeObject*>(pyopencv_GArrayDesc_TypePtr)))
-        {
-            out_metas.push_back(cv::GMetaArg{reinterpret_cast<pyopencv_GArrayDesc_t*>(result)->v});
-        }
+        return cv::GMetaArg{reinterpret_cast<pyopencv_GScalarDesc_t*>(obj)->v};
+    }
+    else if (PyObject_TypeCheck(obj,
+                reinterpret_cast<PyTypeObject*>(pyopencv_GArrayDesc_TypePtr)))
+    {
+        return cv::GMetaArg{reinterpret_cast<pyopencv_GArrayDesc_t*>(obj)->v};
+    }
+    else if (PyObject_TypeCheck(obj,
+                reinterpret_cast<PyTypeObject*>(pyopencv_GOpaqueDesc_TypePtr)))
+    {
+        return cv::GMetaArg{reinterpret_cast<pyopencv_GOpaqueDesc_t*>(obj)->v};
     }
     else
     {
-        util::throw_error(std::logic_error("Unsupported multiple metas"));
+        util::throw_error(std::logic_error("Unsupported output meta type"));
+    }
+}
+
+static cv::GMetaArgs get_meta_args(PyObject* tuple)
+{
+    size_t size = PyTuple_Size(tuple);
+
+    cv::GMetaArgs metas;
+    metas.reserve(size);
+    for (size_t i = 0; i < size; ++i)
+    {
+        metas.push_back(get_meta_arg(PyTuple_GetItem(tuple, i)));
+    }
+
+    return metas;
+}
+
+static GMetaArgs python_meta(PyObject* outMeta, const cv::GMetaArgs &meta, const cv::GArgs &gargs) {
+    PyGILState_STATE gstate;
+    gstate = PyGILState_Ensure();
+
+    cv::GMetaArgs out_metas;
+    try
+    {
+        PyObject* args = PyTuple_New(meta.size());
+        size_t idx = 0;
+        for (auto&& m : meta)
+        {
+            switch (m.index())
+            {
+                case cv::GMetaArg::index_of<cv::GMatDesc>():
+                    PyTuple_SetItem(args, idx, pyopencv_from(cv::util::get<cv::GMatDesc>(m)));
+                    break;
+
+                case cv::GMetaArg::index_of<cv::GScalarDesc>():
+                    PyTuple_SetItem(args, idx, pyopencv_from(cv::util::get<cv::GScalarDesc>(m)));
+                    break;
+
+                case cv::GMetaArg::index_of<cv::GArrayDesc>():
+                    PyTuple_SetItem(args, idx, pyopencv_from(cv::util::get<cv::GArrayDesc>(m)));
+                    break;
+
+                case cv::GMetaArg::index_of<cv::GOpaqueDesc>():
+                    PyTuple_SetItem(args, idx, pyopencv_from(cv::util::get<cv::GOpaqueDesc>(m)));
+                    break;
+
+                case cv::GMetaArg::index_of<cv::util::monostate>():
+                    PyTuple_SetItem(args, idx, gargs[idx].get<PyObject*>());
+                    break;
+
+                default:
+                    util::throw_error(std::logic_error("Unsupported desc"));
+            }
+            ++idx;
+        }
+
+        PyObject* result = PyObject_CallObject(outMeta, args);
+        out_metas = PyTuple_Check(result) ? get_meta_args(result)
+                                          : cv::GMetaArgs{get_meta_arg(result)};
+    }
+    catch (...)
+    {
+        PyGILState_Release(gstate);
+        throw;
     }
     PyGILState_Release(gstate);
 
@@ -617,6 +655,28 @@ static PyObject* pyopencv_cv_gapi_op(PyObject* , PyObject* py_args, PyObject*)
         {
             args.emplace_back(reinterpret_cast<pyopencv_GScalar_t*>(item)->v);
         }
+        else if (PyObject_TypeCheck(item,
+                           reinterpret_cast<PyTypeObject*>(pyopencv_GOpaqueT_TypePtr)))
+        {
+            auto&& arg = reinterpret_cast<pyopencv_GOpaqueT_t*>(item)->v.arg();
+#define HC(T, K) case cv::GOpaqueT::Storage:: index_of<cv::GOpaque<T>>(): \
+            args.emplace_back(cv::util::get<cv::GOpaque<T>>(arg));        \
+            break;                                                        \
+
+            SWITCH(arg.index(), GOPAQUE_TYPE_LIST_G, HC)
+#undef HC
+        }
+        else if (PyObject_TypeCheck(item,
+                           reinterpret_cast<PyTypeObject*>(pyopencv_GArrayT_TypePtr)))
+        {
+            auto&& arg = reinterpret_cast<pyopencv_GArrayT_t*>(item)->v.arg();
+#define HC(T, K) case cv::GArrayT::Storage:: index_of<cv::GArray<T>>(): \
+            args.emplace_back(cv::util::get<cv::GArray<T>>(arg));       \
+            break;                                                      \
+
+            SWITCH(arg.index(), GARRAY_TYPE_LIST_G, HC)
+#undef HC
+        }
         else
         {
             Py_INCREF(item);
@@ -625,9 +685,9 @@ static PyObject* pyopencv_cv_gapi_op(PyObject* , PyObject* py_args, PyObject*)
     }
 
     cv::GKernel::M outMetaWrapper = std::bind(python_meta,
-                                    outMeta,
-                                    std::placeholders::_1,
-                                    std::placeholders::_2);
+                                              outMeta,
+                                              std::placeholders::_1,
+                                              std::placeholders::_2);
     return pyopencv_from(cv::gapi::op(id, outMetaWrapper, std::move(args)));
 }
 
