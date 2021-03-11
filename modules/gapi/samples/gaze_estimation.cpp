@@ -180,9 +180,13 @@ GAPI_OCV_KERNEL(OCVParseSSD, ParseSSD) {
 };
 
 cv::Rect eyeBox(const cv::Rect &face_rc,
+
                 float p1_x, float p1_y, float p2_x, float p2_y,
+
                 float scale = 1.8f) {
+
     const auto &up = face_rc.size();
+
     const cv::Point p1 = {
         static_cast<int>(p1_x*up.width),
         static_cast<int>(p1_y*up.height)

@@ -487,6 +487,8 @@ static cv::GRunArgs run_py_kernel(PyObject* kernel,
 
         PyObject* result = PyObject_CallObject(kernel, args);
 
+        GAPI_Assert(result && "Kernel return null");
+
         outs = out_info.size() == 1 ? cv::GRunArgs{extract_run_arg(out_info[0], result)}
                                     : extract_run_args(out_info, result);
     }
