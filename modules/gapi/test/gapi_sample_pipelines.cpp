@@ -430,4 +430,43 @@ TEST(GAPI_Pipeline, ReplaceDefaultByFunctor)
     EXPECT_TRUE(f.is_called);
 }
 
+static cv::GMetaArgs custom_add_meta(const cv::GMetaArgs& meta, const cv::GArgs&) {
+    auto desc = cv::util::get<cv::GMatDesc>(meta[0]);
+    return cv::GMetaArgs{cv::GMetaArg{desc}};
+}
+
+static void custom_add_kernel(cv::GCPUContext& ctx)
+{
+    auto in0   = ctx.inMat(0);
+    auto in1   = ctx.inMat(1);
+    auto dtype = ctx.inArg<int>(2);
+    cv::add(in0, in1, ctx.outMatR(0), cv::noArray(), dtype);
+}
+
+TEST(GAPI_Pipeline, CustomRuntimeOp)
+{
+    cv::Size size(300, 300);
+    int type = CV_8UC3;
+    cv::Mat in_mat1(size, type);
+    cv::Mat in_mat2(size, type);
+    cv::randu(in_mat2, cv::Scalar::all(0), cv::Scalar::all(255));
+    cv::randu(in_mat1, cv::Scalar::all(0), cv::Scalar::all(255));
+    cv::Mat out_mat, ref_mat;
+
+    // OpenCV //////////////////////////////////////////////////////////////////////////
+    ref_mat = in_mat1 + in_mat2;
+
+    // G-API ///////////////////////////////////////////////////////////////////////////
+    cv::GMat in1;
+    cv::GMat in2;
+    auto outputs = cv::gapi::op("custom.add", custom_add_meta, in1, in2, type);
+    auto out = outputs.yield();
+
+    cv::GComputation comp(cv::GIn(in1, in2), cv::GOut(out));
+
+    auto impl = cv::gapi::cpu::ocv_kernel("custom.add", custom_add_meta, custom_add_kernel);
+    auto pkg  = cv::gapi::kernels(impl);
+    comp.apply(cv::gin(in_mat1, in_mat2), cv::gout(out_mat), cv::compile_args(pkg));
+}
+
 } // namespace opencv_test

@@ -108,3 +108,34 @@ std::vector<cv::gapi::GBackend> cv::gapi::GKernelPackage::backends() const
 
     return std::vector<cv::gapi::GBackend>(unique_set.begin(), unique_set.end());
 }
+
+struct cv::GOutputs::Priv {
+    size_t output = 0;
+    std::unique_ptr<cv::GCall> call;
+};
+
+cv::GOutputs::GOutputs(const std::string& id, GKernel::M outMeta, cv::GArgs&& args)
+    : m_priv(new Priv())
+{
+    cv::GKinds kinds;
+    kinds.reserve(args.size());
+    std::transform(args.begin(), args.end(), std::back_inserter(kinds),
+                   [](const cv::GArg& arg) { return arg.opaque_kind;});
+
+    m_priv->call.reset(new cv::GCall(cv::GKernel{id,
+                                                 {},              // tag
+                                                 outMeta,
+                                                 {},              // outShapes
+                                                 std::move(kinds),
+                                                 {}}));           // outCtors
+    m_priv->call->setArgs(std::move(args));
+}
+
+cv::GOutputs cv::gapi::op(const std::string& id, cv::GKernel::M outMeta, cv::GArgs&& args)
+{
+    return cv::GOutputs(id, outMeta, std::move(args));
+}
+
+cv::GMat cv::GOutputs::yield() {
+    return m_priv->call->yield(m_priv->output++);
+}

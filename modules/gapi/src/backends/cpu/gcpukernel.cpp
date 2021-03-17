@@ -54,3 +54,11 @@ cv::GCPUKernel::GCPUKernel(const GCPUKernel::RunF &runF, const GCPUKernel::Setup
     : m_runF(runF), m_setupF(setupF), m_isStateful(m_setupF != nullptr)
 {
 }
+
+cv::gapi::cpu::GOCVFunctor cv::gapi::cpu::ocv_kernel(const std::string& id,
+                                                     cv::gapi::cpu::GOCVFunctor::Meta outMeta,
+                                                     cv::gapi::cpu::GOCVFunctor::Impl impl)
+{
+
+    return cv::gapi::cpu::GOCVFunctor(id.c_str(), outMeta, impl);
+}

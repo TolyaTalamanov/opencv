@@ -257,6 +257,19 @@ public:
     }
 };
 
+class GAPI_EXPORTS GOutputs
+{
+public:
+    GOutputs() = default;
+    GOutputs(const std::string& id, GKernel::M outMeta, GArgs&& args);
+
+    GMat yield();
+
+private:
+    struct Priv;
+    std::shared_ptr<Priv> m_priv;
+};
+
 namespace detail {
 // This tiny class eliminates the semantic difference between
 // GKernelType and GKernelTypeM.
@@ -726,6 +739,29 @@ namespace gapi {
         GKernelPackage pkg;
     };
     /** @} */
+
+    /**
+     * @brief Perform G-API operation with passed id, meta and args
+     *
+     * @param id Operation id
+     * @param outMeta Function which return output meta for operation
+     * @param args Operation input arguments
+     * @return cv::GOutputs
+     */
+    GAPI_EXPORTS cv::GOutputs op(const std::string& id, cv::GKernel::M outMeta, cv::GArgs&& args);
+
+    /**
+     * @brief Perform G-API operation with passed id, meta and args
+     *
+     * @overload
+     *
+     * @return cv::GOutputs
+     */
+    template <typename... Ts>
+    GAPI_EXPORTS cv::GOutputs op(const std::string& id, cv::GKernel::M outMeta, Ts&&... args)
+    {
+        return op(id, outMeta, cv::GArgs{cv::GArg(std::forward<Ts>(args))... });
+    }
 
 } // namespace gapi
 

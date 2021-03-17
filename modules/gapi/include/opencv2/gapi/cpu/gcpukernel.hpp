@@ -81,6 +81,7 @@ namespace cpu
 
     template<typename K, typename Callable>
     GOCVFunctor ocv_kernel(Callable& c);
+
     //! @endcond
 
 } // namespace cpu
@@ -506,6 +507,16 @@ private:
     GKernelImpl impl_;
 };
 
+namespace gapi {
+namespace cpu {
+
+GAPI_EXPORTS GOCVFunctor ocv_kernel(const std::string& id,
+                                    GOCVFunctor::Meta outMeta,
+                                    GOCVFunctor::Impl impl);
+
+} // namespace gapi
+} // namespace cpu
+
 //! @cond IGNORED
 template<typename K, typename Callable>
 gapi::cpu::GOCVFunctor gapi::cpu::ocv_kernel(Callable& c)
@@ -526,6 +537,7 @@ gapi::cpu::GOCVFunctor gapi::cpu::ocv_kernel(const Callable& c)
                       , std::bind(&P::callFunctor, std::placeholders::_1, c)
                       };
 }
+
 //! @endcond
 
 } // namespace cv
